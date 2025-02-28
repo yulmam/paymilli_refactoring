@@ -1,0 +1,34 @@
+server:
+  servlet:
+    context-path: /api/v1/paymilli
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: PayMilli
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/millidb?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    username: root
+    password: 1234
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        globally_quoted_identifiers: true
+        format_sql: true
+        show_sql: true
+    hibernate:
+      ddl-auto: update
+    open-in-view: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
+jwt:
+  header: Authorization
+  secret: ${jwt.secret}
+  token-validity-in-seconds: 86400
