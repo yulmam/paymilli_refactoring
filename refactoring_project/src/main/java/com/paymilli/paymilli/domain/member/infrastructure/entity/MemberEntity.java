@@ -1,9 +1,9 @@
-package com.paymilli.paymilli.domain.member.entity;
+package com.paymilli.paymilli.domain.member.infrastructure.entity;
 
-import com.paymilli.paymilli.domain.card.entity.Card;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
 import com.paymilli.paymilli.domain.member.dto.request.AddMemberRequest;
 import com.paymilli.paymilli.domain.member.dto.response.MemberInfoResponse;
-import com.paymilli.paymilli.domain.payment.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -35,7 +35,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "member")
-public class Member {
+public class MemberEntity {
 
     @Id
     @GeneratedValue
@@ -43,7 +43,7 @@ public class Member {
     private UUID id;
 
     @OneToMany(mappedBy = "member")
-    private List<Card> cards = new ArrayList<Card>();
+    private List<CardEntity> cardEntities = new ArrayList<CardEntity>();
 
     @OneToMany(mappedBy = "member")
     private List<PaymentGroup> paymentGroups = new ArrayList<PaymentGroup>();
@@ -78,10 +78,10 @@ public class Member {
     @Column(nullable = false)
     private String phone;
 
-    //    card 개발시 제거 예정
+    //    cardEntity 개발시 제거 예정
     @OneToOne
     @JoinColumn(name = "main_card_id")
-    private Card mainCard;
+    private CardEntity mainCardEntity;
 
     @Column
     @CreationTimestamp
@@ -96,9 +96,9 @@ public class Member {
     @ColumnDefault("false")
     private boolean deleted;
 
-    public static Member toEntity(AddMemberRequest addMemberRequest, String userKey,
-        LocalDate birthday, String encodePassword, String encodePaymentPassword, String email) {
-        return Member.builder()
+    public static MemberEntity toEntity(AddMemberRequest addMemberRequest, String userKey,
+                                        LocalDate birthday, String encodePassword, String encodePaymentPassword, String email) {
+        return MemberEntity.builder()
             .memberId(addMemberRequest.getMemberId())
             .password(encodePassword)
             .name(addMemberRequest.getName())
@@ -113,28 +113,28 @@ public class Member {
     }
 
     //    연관관계 편의 메서드
-    public void addCard(Card card) {
-        cards.add(card);
-        card.setMember(this);
+    public void addCard(CardEntity cardEntity) {
+        cardEntities.add(cardEntity);
+        cardEntity.setMemberEntity(this);
     }
 
     //    연관관계 편의 메서드
     public void addPaymentGroup(PaymentGroup paymentGroup) {
         paymentGroups.add(paymentGroup);
-        paymentGroup.setMember(this);
+        paymentGroup.setMemberEntity(this);
     }
 
     public void setPaymentPassword(String paymentPassword) {
         this.paymentPassword = paymentPassword;
     }
 
-    public void setMainCard(Card mainCard) {
-        this.mainCard = mainCard;
+    public void setMainCardEntity(CardEntity mainCardEntity) {
+        this.mainCardEntity = mainCardEntity;
     }
 
     public void delete() {
         deleted = true;
-        mainCard = null;
+        mainCardEntity = null;
     }
 
     public void create() {

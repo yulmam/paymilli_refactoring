@@ -1,9 +1,8 @@
-package com.paymilli.paymilli.domain.card.service;
+package com.paymilli.paymilli.domain.card.controller.port;
 
 import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
 import com.paymilli.paymilli.domain.card.dto.response.CardListResponse;
-import com.paymilli.paymilli.domain.card.dto.response.CardResponse;
-import java.util.List;
+
 import java.util.UUID;
 
 public interface CardService {

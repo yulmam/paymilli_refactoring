@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.payment.entity;
+package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
 public enum PaymentStatus {
     PAYMENT("payment"), REFUND("refund");

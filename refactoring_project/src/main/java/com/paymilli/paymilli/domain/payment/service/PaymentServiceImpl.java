@@ -1,10 +1,10 @@
 package com.paymilli.paymilli.domain.payment.service;
 
-import com.paymilli.paymilli.domain.card.entity.Card;
-import com.paymilli.paymilli.domain.card.repository.CardRepository;
-import com.paymilli.paymilli.domain.member.entity.Member;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
+import com.paymilli.paymilli.domain.card.service.port.CardRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import com.paymilli.paymilli.domain.member.jwt.TokenProvider;
-import com.paymilli.paymilli.domain.member.repository.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
 import com.paymilli.paymilli.domain.payment.dto.request.ApprovePaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentCardRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
@@ -15,9 +15,9 @@ import com.paymilli.paymilli.domain.payment.dto.response.MetaResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.SearchPaymentGroupResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.TransactionResponse;
-import com.paymilli.paymilli.domain.payment.entity.Payment;
-import com.paymilli.paymilli.domain.payment.entity.PaymentGroup;
-import com.paymilli.paymilli.domain.payment.repository.PaymentGroupRepository;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.Payment;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.PaymentGroupRepository;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.util.RedisUtil;
@@ -97,10 +97,10 @@ public class PaymentServiceImpl implements PaymentService {
         String accessToken = tokenProvider.extractAccessToken(token);
         UUID id = tokenProvider.getId(accessToken);
         log.info(id.toString());
-        Member member = memberRepository.findById(id)
+        MemberEntity memberEntity = memberRepository.findById(id)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
-        if (isNotSamePaymentPassword(member, approvePaymentRequest.getPassword())) {
+        if (isNotSamePaymentPassword(memberEntity, approvePaymentRequest.getPassword())) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_ERROR);
         }
 
@@ -120,11 +120,11 @@ public class PaymentServiceImpl implements PaymentService {
             Payment payment = Payment.toEntity(demandPaymentCardRequest);
 
             //없으면 예외 터짐
-            Card card = cardRepository.findById(demandPaymentCardRequest.getCardId()).get();
-            card.addPayment(payment);
+            CardEntity cardEntity = cardRepository.findById(demandPaymentCardRequest.getCardId()).get();
+            cardEntity.addPayment(payment);
 
             paymentGroup.addPayment(payment);
-            member.addPaymentGroup(paymentGroup);
+            memberEntity.addPaymentGroup(paymentGroup);
         }
 
         paymentDetailService.requestPaymentGroup(paymentGroup);
@@ -132,7 +132,7 @@ public class PaymentServiceImpl implements PaymentService {
         Random random = new Random();
         int randomNumber = 100000 + random.nextInt(900000); // 6자리 난수 생성 (100000 ~ 999999)
 
-        String refundToken = member.getId() + "-refund-" + randomNumber;
+        String refundToken = memberEntity.getId() + "-refund-" + randomNumber;
 
         redisUtil.saveDataToRedis(refundToken, paymentGroup.getId(), 300 * 1000);
 
@@ -216,7 +216,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentDetailService.refundPaymentGroup(paymentGroup);
     }
 
-    private boolean isNotSamePaymentPassword(Member member, String paymentPassword) {
-        return !passwordEncoder.matches(paymentPassword, member.getPaymentPassword());
+    private boolean isNotSamePaymentPassword(MemberEntity memberEntity, String paymentPassword) {
+        return !passwordEncoder.matches(paymentPassword, memberEntity.getPaymentPassword());
     }
 }

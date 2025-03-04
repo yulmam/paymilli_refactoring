@@ -14,4 +14,5 @@ public class AddCardRequest {
     private String expirationDate;
     private String cardHolderName;
     private String cardPassword;
+
 }

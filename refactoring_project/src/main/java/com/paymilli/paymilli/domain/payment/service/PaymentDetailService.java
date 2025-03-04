@@ -1,6 +1,6 @@
 package com.paymilli.paymilli.domain.payment.service;
 
-import com.paymilli.paymilli.domain.payment.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
 import org.springframework.stereotype.Service;
 
 @Service

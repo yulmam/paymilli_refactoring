@@ -5,14 +5,13 @@ import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
 import com.paymilli.paymilli.domain.card.dto.request.ChangeMainCardRequest;
 import com.paymilli.paymilli.domain.card.dto.request.DeleteCardRequest;
 import com.paymilli.paymilli.domain.card.dto.response.CardListResponse;
-import com.paymilli.paymilli.domain.card.dto.response.CardResponse;
-import com.paymilli.paymilli.domain.card.service.CardService;
+import com.paymilli.paymilli.domain.card.controller.port.CardService;
 import com.paymilli.paymilli.domain.member.jwt.TokenProvider;
 import com.paymilli.paymilli.global.exception.BaseResponse;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
-import java.util.List;
+
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/card")
+@RequestMapping("/cardEntity")
 public class CardController {
 
     private final CardService cardService;

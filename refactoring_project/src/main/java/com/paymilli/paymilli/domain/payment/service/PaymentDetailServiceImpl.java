@@ -1,17 +1,17 @@
 package com.paymilli.paymilli.domain.payment.service;
 
-import com.paymilli.paymilli.domain.card.entity.Card;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
 import com.paymilli.paymilli.domain.payment.client.PaymentClient;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentInfoRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentRefundRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.cardcompany.PaymentInfoResponse;
-import com.paymilli.paymilli.domain.payment.entity.Payment;
-import com.paymilli.paymilli.domain.payment.entity.PaymentGroup;
-import com.paymilli.paymilli.domain.payment.entity.PaymentStatus;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.Payment;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentStatus;
 import com.paymilli.paymilli.domain.payment.exception.CardException;
 import com.paymilli.paymilli.domain.payment.exception.PaymentCardException;
-import com.paymilli.paymilli.domain.payment.repository.PaymentGroupRepository;
-import com.paymilli.paymilli.domain.payment.repository.PaymentRepository;
+import com.paymilli.paymilli.domain.payment.infrastructure.PaymentGroupRepository;
+import com.paymilli.paymilli.domain.payment.infrastructure.PaymentRepository;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.exception.ClientException;
 
@@ -70,12 +70,12 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
 
             // 에러 발생 카드
             Payment payment = paymentGroup.getPayments().get(paymentIdx);
-            String cardNum = payment.getCard().getCardNumber();
+            String cardNum = payment.getCardEntity().getCardNumber();
 
             log.info("=== throw PAYMENT_ERROR to client ===");
             throw new CardException(BaseResponseStatus.PAYMENT_ERROR,
                 e,
-                payment.getCard().getCardName(),
+                payment.getCardEntity().getCardName(),
                 cardNum.substring(cardNum.length() - 4),
                 e.getMessage());
 
@@ -84,15 +84,15 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
 
     private String requestSinglePayment(Payment payment, String storeName) {
 
-        Card card = payment.getCard();
+        CardEntity cardEntity = payment.getCardEntity();
 
-        log.info("card: " + card.getCardNumber() + "@@@@@@@@@@@@@@@");
+        log.info("cardEntity: " + cardEntity.getCardNumber() + "@@@@@@@@@@@@@@@");
 
         // 결제 요청
         PaymentInfoResponse response = paymentClient.requestPayment(
-            new PaymentInfoRequest(storeName, payment.getPrice(), card.getCardNumber(),
-                card.getCVC(),
-                card.getExpirationDate(), payment.getInstallment()));
+            new PaymentInfoRequest(storeName, payment.getPrice(), cardEntity.getCardNumber(),
+                cardEntity.getCVC(),
+                cardEntity.getExpirationDate(), payment.getInstallment()));
 
         log.info("response:" + response.getApproveNumber());
         return response.getApproveNumber();

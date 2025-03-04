@@ -1,18 +1,21 @@
 package com.paymilli.paymilli.domain.card.service;
 
-import com.paymilli.paymilli.domain.card.client.CardClient;
+import com.paymilli.paymilli.domain.card.domain.Card;
+import com.paymilli.paymilli.domain.card.infrastructure.CardClient;
+import com.paymilli.paymilli.domain.card.controller.port.CardService;
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationRequest;
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationResponse;
 import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
 import com.paymilli.paymilli.domain.card.dto.response.CardListResponse;
 import com.paymilli.paymilli.domain.card.dto.response.CardResponse;
-import com.paymilli.paymilli.domain.card.entity.Card;
-import com.paymilli.paymilli.domain.card.repository.CardRepository;
-import com.paymilli.paymilli.domain.member.entity.Member;
-import com.paymilli.paymilli.domain.member.repository.MemberRepository;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
+import com.paymilli.paymilli.domain.card.service.port.CardRepository;
+import com.paymilli.paymilli.domain.card.vo.CardCreate;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
+import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
-import java.util.ArrayList;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,37 +42,42 @@ public class CardServiceImpl implements CardService {
 
     @Transactional
     public void registerCard(AddCardRequest addCardRequest, UUID memberId) {
-        Member member = memberRepository.findById(memberId).orElseThrow(()-> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
+        MemberEntity memberEntity = memberRepository.findById(memberId).orElseThrow(()-> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
         CardValidationResponse response = cardClient.validateAndGetCardInfo(
-            CardValidationRequest.builder()
-                .cardNumber(addCardRequest.getCardNumber())
-                .cvc(addCardRequest.getCvc())
-                .expirationDate(addCardRequest.getExpirationDate())
-                .cardPassword(addCardRequest.getCardPassword())
-                .userKey(member.getUserKey())
-                .build()
+            CardValidationRequest.fromAddCardRequestAndUserKey(addCardRequest, memberEntity.getUserKey())
         );
 
-        Optional<Card> cardOpt = cardRepository.findByCardNumberAndMemberId(
+        Optional<Card> optionalCard = cardRepository.findByCardNumberAndMemberId(
             addCardRequest.getCardNumber(), memberId);
 
-        if (cardOpt.isPresent()) {
-            Card card = cardOpt.get();
+
+        //soft delete 다시 생성
+        if (optionalCard.isPresent()) {
+            Card card = optionalCard.get();
             if (!card.isDeleted()) {
                 throw new BaseException(BaseResponseStatus.CARD_ALREADY_REGISTERED);
             }
             card.create();
+            cardRepository.save(card);
             return;
         }
 
-        Card card = Card.toEntity(addCardRequest, response, member);
+        CardCreate cardCreate = CardCreate.builder()
+                .cardValidationResponse(response)
+                .addCardRequest(addCardRequest)
+                .memberId(memberEntity.getId())
+                .build();
+
+        Card card = Card.create(cardCreate);
 
         cardRepository.save(card);
 
-        if(member.getMainCard() == null){
-            member.setMainCard(card);
-        }
+
+        // todo : memberEntity 와 member 분리 이후 메인 카드 등록해야한다.
+//        if(memberEntity.getMainCardEntity() == null){
+//            memberEntity.setMainCardEntity(cardEntity);
+//        }
     }
 
     @Transactional
@@ -78,10 +86,11 @@ public class CardServiceImpl implements CardService {
         if(cards.isEmpty())
             return new CardListResponse();
 
-        Card mainCard = memberRepository.findById(memberId).orElseThrow().getMainCard();
+        // todo : memberEntity와 member 분리 이후 메인카드 알고리즘 찾기 수행
+        CardEntity mainCardEntity = memberRepository.findById(memberId).orElseThrow().getMainCardEntity();
 
         //mainCard를 list에서 찾기
-        int mainCardIdx = cards.indexOf(mainCard);
+        int mainCardIdx = cards.indexOf(mainCardEntity);
 
         if(mainCardIdx == -1){
             throw new BaseException(BaseResponseStatus.MAIN_CARD_NOT_EXIST);
@@ -89,44 +98,48 @@ public class CardServiceImpl implements CardService {
 
         List<CardResponse> cardResponses = cards.stream()
             .filter(card -> !card.isDeleted())
-            .map(Card::makeResponse)
+            .map(CardResponse::from)
             .collect(Collectors.toList());
 
         //메인 카드를 제일 앞으로
         if(mainCardIdx != 0)
             Collections.swap(cardResponses, 0, mainCardIdx);
-
-        return new CardListResponse(mainCard.getId(), cardResponses);
+        // todo : memberEntity와 member 분리 이후 member 변환
+        return new CardListResponse(mainCardEntity.getId(), cardResponses);
     }
 
     @Transactional
     public void deleteCard(UUID cardId, UUID memberId) {
-        Member member =  memberRepository.findById(memberId).orElseThrow();
+        // todo : memberEntity와 member 분리 이후 수행
+        MemberEntity memberEntity =  memberRepository.findById(memberId).orElseThrow();
 
-        if(member.getMainCard().getId().equals(cardId)){
+        if(memberEntity.getMainCardEntity().getId().equals(cardId)){
             throw new BaseException(BaseResponseStatus.CANT_DELETE_MAIN_CARD);
         }
 
-        Card card = cardRepository.findByIdAndMemberId(cardId, memberId)
+        Card card= cardRepository.findByIdAndMemberId(cardId, memberId)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.CARD_NOT_FOUND));
 
         if(card.isDeleted()) {
             throw new BaseException(BaseResponseStatus.CARD_ALREADY_DELETED);
         }
 
-        card.delete();
+        Card deletedcard = card.delete();
+
+        cardRepository.save(deletedcard);
     }
 
     @Transactional
     public void changeMainCard(UUID cardId, UUID memberId) {
-        Member member = memberRepository.findById(memberId).orElseThrow(()-> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
+        MemberEntity memberEntity = memberRepository.findById(memberId).orElseThrow(()-> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
-        Card card = cardRepository.findByIdAndMemberIdAndDeleted(cardId, memberId,false).orElseThrow(()-> new BaseException(BaseResponseStatus.CARD_NOT_FOUND));
+        Card card = cardRepository.findByIdAndMemberIdAndDeleted(cardId, memberId,false)
+                .orElseThrow(()-> new BaseException(BaseResponseStatus.CARD_NOT_FOUND));
 
-        if(member.getMainCard().getId().equals(card.getId())){
+        if(memberEntity.getMainCardEntity().getId().equals(card.getId())){
             throw new BaseException(BaseResponseStatus.ALREADY_MAIN_CARD);
         }
-
-        member.setMainCard(card);
+        // todo : memberEntity와 member 분리 이후 수행
+        memberEntity.setMainCardEntity(cardEntity);
     }
 }

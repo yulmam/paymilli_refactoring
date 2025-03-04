@@ -16,7 +16,7 @@ public enum BaseResponseStatus {
     //member 도메인
     SUCCESS_MEMBER_CREATED(201, "정상적으로 가입되었습니다"),
 
-    //card 도메인
+    //cardEntity 도메인
     SUCCESS_MAIN_CARD_CHANGED(200, "메인카드 변경에 성공했습니다."),
     SUCCESS_CARD_REGISTERED(200, "카드 등록에 성공했습니다."),
     SUCCESS_CARD_DELETED(200, "카드 삭제에 성공했습니다."),

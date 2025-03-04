@@ -1,6 +1,6 @@
 package com.paymilli.paymilli.domain.member.dto.request;
 
-import com.paymilli.paymilli.domain.member.entity.Gender;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.Gender;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;

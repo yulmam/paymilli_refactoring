@@ -1,6 +1,6 @@
-package com.paymilli.paymilli.domain.payment.repository;
+package com.paymilli.paymilli.domain.payment.infrastructure;
 
-import com.paymilli.paymilli.domain.payment.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

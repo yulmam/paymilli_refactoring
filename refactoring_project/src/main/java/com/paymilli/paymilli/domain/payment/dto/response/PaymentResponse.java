@@ -1,6 +1,6 @@
 package com.paymilli.paymilli.domain.payment.dto.response;
 
-import com.paymilli.paymilli.domain.card.entity.CardType;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardType;
 import lombok.Builder;
 import lombok.Getter;
 

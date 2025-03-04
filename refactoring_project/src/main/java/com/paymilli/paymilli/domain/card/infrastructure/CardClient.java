@@ -1,15 +1,12 @@
-package com.paymilli.paymilli.domain.card.client;
+package com.paymilli.paymilli.domain.card.infrastructure;
 
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationRequest;
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationResponse;
-import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
-import com.paymilli.paymilli.domain.card.dto.response.CardInfoResponse;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Component
 public class CardClient {

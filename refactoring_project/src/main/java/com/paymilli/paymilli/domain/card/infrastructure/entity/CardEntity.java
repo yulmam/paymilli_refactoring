@@ -1,30 +1,28 @@
-package com.paymilli.paymilli.domain.card.entity;
+package com.paymilli.paymilli.domain.card.infrastructure.entity;
 
 
+import com.paymilli.paymilli.domain.card.domain.Card;
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationResponse;
 import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
 import com.paymilli.paymilli.domain.card.dto.response.CardResponse;
-import com.paymilli.paymilli.domain.member.entity.Member;
-import com.paymilli.paymilli.domain.payment.entity.Payment;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.Payment;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -33,8 +31,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "card")
-public class Card {
+@Table(name = "cardEntity")
+public class CardEntity {
 
     @Id
     @GeneratedValue
@@ -43,10 +41,7 @@ public class Card {
 
     @ManyToOne
     @JoinColumn(name = "member_id")
-    private Member member;
-
-    @OneToMany(mappedBy = "card")
-    private List<Payment> payments;
+    private MemberEntity memberEntity;
 
     @Column(nullable = false)
     private String cardNumber;
@@ -69,6 +64,8 @@ public class Card {
     @Column(nullable = false)
     private CardType cardType;
 
+    @ColumnDefault("false")
+    private boolean deleted;
     @Column
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
@@ -79,14 +76,13 @@ public class Card {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
-    @ColumnDefault("false")
-    private boolean deleted;
+
 
     @Builder
-    public Card(Member member, String cardNumber, String CVC, String expirationDate,
-        String cardName,
-        String cardHolderName, String cardImage, CardType cardType) {
-        this.member = member;
+    public CardEntity(MemberEntity memberEntity, String cardNumber, String CVC, String expirationDate,
+                      String cardName,
+                      String cardHolderName, String cardImage, CardType cardType) {
+        this.memberEntity = memberEntity;
         this.cardNumber = cardNumber;
         this.CVC = CVC;
         this.expirationDate = expirationDate;
@@ -96,52 +92,40 @@ public class Card {
         this.cardType = cardType;
     }
 
-    public static Card toEntity(AddCardRequest addCardRequest,
-        CardValidationResponse cardValidationResponse, Member member) {
+    public static CardEntity fromModel(Card card, MemberEntity memberEntity){
+        CardEntity cardEntity = new CardEntity();
+        cardEntity.id = card.getId();
+        cardEntity.memberEntity = memberEntity;
+        cardEntity.cardNumber = card.getCardInfo().getCardNumber();
+        cardEntity.CVC = card.getCardInfo().getCVC();
+        cardEntity.expirationDate = card.getCardInfo().getExpirationDate();
+        cardEntity.cardName = card.getCardName();
+        cardEntity.cardHolderName = card.getCardHolderName();
+        cardEntity.cardImage = card.getCardImage();
+        cardEntity.cardType = card.getCardType();
+        return cardEntity;
+    }
+
+    public Card toModel(){
         return Card.builder()
-            .cardNumber(addCardRequest.getCardNumber())
-            .CVC(addCardRequest.getCvc())
-            .expirationDate(addCardRequest.getExpirationDate())
-            .cardHolderName(addCardRequest.getCardHolderName())
-            .cardImage(cardValidationResponse.getCardImage())
-            .cardName(cardValidationResponse.getCardName())
-            .cardType(cardValidationResponse.getCardType())
-            .member(member)
-            .build();
+                .id(id)
+                .memberId(memberEntity.getId())
+                .cardNumber(cardNumber)
+                .CVC(CVC)
+                .expirationDate(expirationDate)
+                .cardName(cardName)
+                .cardHolderName(cardHolderName)
+                .cardImage(cardImage)
+                .cardType(cardType)
+                .build();
     }
 
-    public void delete() {
-        deleted = true;
-    }
-
-    public void create() {
-        deleted = false;
-    }
-
-    public CardResponse makeResponse() {
-        return CardResponse.builder()
-            .cardId(id)
-            .cardName(cardName)
-            .cardType(cardType)
-            .cardLastNum(cardNumber.substring(12, 16))
-            .cardImage(cardImage)
-            .build();
-    }
-
-    public void setMember(Member member) {
-        this.member = member;
-    }
-
-    public void addPayment(Payment payment) {
-        payments.add(payment);
-        payment.setCard(this);
-    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        Card card = (Card) o;
-        return id != null && Objects.equals(id, card.id);
+        CardEntity cardEntity = (CardEntity) o;
+        return id != null && Objects.equals(id, cardEntity.id);
     }
 
     @Override

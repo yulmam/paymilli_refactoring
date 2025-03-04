@@ -1,6 +1,6 @@
-package com.paymilli.paymilli.domain.payment.entity;
+package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
-import com.paymilli.paymilli.domain.card.entity.Card;
+import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentCardRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
 import jakarta.persistence.CascadeType;
@@ -38,7 +38,7 @@ public class Payment {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "card_id")
-    private Card card;
+    private CardEntity cardEntity;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "payment_group_id")
@@ -86,12 +86,12 @@ public class Payment {
     public PaymentResponse makeResponse() {
         return PaymentResponse.builder()
             .cardId(id.toString())
-            .cardName(card.getCardName())
+            .cardName(cardEntity.getCardName())
             .chargePrice(price)
-            .cardType(card.getCardType())
+            .cardType(cardEntity.getCardType())
             .approveNumber(approveNumber)
             .installment(installment)
-            .cardImg(card.getCardImage())
+            .cardImg(cardEntity.getCardImage())
             .build();
     }
 
@@ -99,7 +99,7 @@ public class Payment {
         this.paymentGroup = paymentGroup;
     }
 
-    public void setCard(Card card) {
-        this.card = card;
+    public void setCardEntity(CardEntity cardEntity) {
+        this.cardEntity = cardEntity;
     }
 }

@@ -1,6 +1,6 @@
 package com.paymilli.paymilli.domain.member.dto.response;
 
-import com.paymilli.paymilli.domain.member.entity.Gender;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.Gender;
 import lombok.Builder;
 import lombok.Getter;
 

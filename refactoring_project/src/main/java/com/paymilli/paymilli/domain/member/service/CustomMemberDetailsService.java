@@ -1,7 +1,7 @@
 package com.paymilli.paymilli.domain.member.service;
 
-import com.paymilli.paymilli.domain.member.entity.Member;
-import com.paymilli.paymilli.domain.member.repository.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
+import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,14 +20,14 @@ public class CustomMemberDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
-        Member member = memberRepository.findByMemberId(userId)
+        MemberEntity memberEntity = memberRepository.findByMemberId(userId)
             .orElseThrow(() -> new UsernameNotFoundException("유저정보가 없습니다."));
 
-        GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(member.getRole().getValue());
+        GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(memberEntity.getRole().getValue());
 
         return User.builder()
-            .username(member.getMemberId())
-            .password(member.getPassword())
+            .username(memberEntity.getMemberId())
+            .password(memberEntity.getPassword())
             .authorities(grantedAuthority)
             .build();
     }

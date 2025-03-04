@@ -1,7 +1,7 @@
 package com.paymilli.paymilli.domain.member.jwt;
 
-import com.paymilli.paymilli.domain.member.entity.Member;
-import com.paymilli.paymilli.domain.member.repository.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
+import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.util.RedisUtil;
@@ -131,8 +131,8 @@ public class TokenProvider implements InitializingBean {
 
         System.out.println(memberID);
 
-        Member member = memberRepository.findByMemberId(memberID).orElseThrow();
-        return member.getId();
+        MemberEntity memberEntity = memberRepository.findByMemberId(memberID).orElseThrow();
+        return memberEntity.getId();
     }
 
     public Authentication getAuthentication(String token) {

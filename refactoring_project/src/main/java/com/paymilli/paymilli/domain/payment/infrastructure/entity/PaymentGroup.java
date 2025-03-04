@@ -1,6 +1,6 @@
-package com.paymilli.paymilli.domain.payment.entity;
+package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
-import com.paymilli.paymilli.domain.member.entity.Member;
+import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
 import jakarta.persistence.CascadeType;
@@ -42,7 +42,7 @@ public class PaymentGroup {
     private UUID id;
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "member_id")
-    private Member member;
+    private MemberEntity memberEntity;
     @Column(name = "total_price", nullable = false)
     private int totalPrice;
 
@@ -96,8 +96,8 @@ public class PaymentGroup {
         this.status = status;
     }
 
-    public void setMember(Member member) {
-        this.member = member;
+    public void setMemberEntity(MemberEntity memberEntity) {
+        this.memberEntity = memberEntity;
     }
 
     public PaymentGroupResponse makeResponse() {

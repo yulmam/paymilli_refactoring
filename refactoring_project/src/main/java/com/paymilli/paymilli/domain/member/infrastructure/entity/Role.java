@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.member.entity;
+package com.paymilli.paymilli.domain.member.infrastructure.entity;
 
 public enum Role {
     USER("USER"), ADMIN("ADMIN");
