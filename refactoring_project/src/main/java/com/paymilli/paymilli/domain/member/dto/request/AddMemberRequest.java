@@ -9,7 +9,7 @@ import lombok.Getter;
 public class AddMemberRequest {
 
     @Size(min = 4, max = 20)
-    private String memberId;
+    private String loginId;
     private String name;
     @Size(min = 8, max = 13)
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~]+$")

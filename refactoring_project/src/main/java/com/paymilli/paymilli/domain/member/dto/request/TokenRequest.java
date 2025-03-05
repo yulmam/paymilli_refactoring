@@ -7,6 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class TokenRequest {
 
-    private String memberId;
+    private String loginId;
     private String password;
 }

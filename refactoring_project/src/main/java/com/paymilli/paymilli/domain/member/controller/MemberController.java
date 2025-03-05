@@ -1,5 +1,6 @@
 package com.paymilli.paymilli.domain.member.controller;
 
+import com.paymilli.paymilli.domain.member.controller.port.MemberService;
 import com.paymilli.paymilli.domain.member.dto.request.AddMemberRequest;
 import com.paymilli.paymilli.domain.member.dto.request.LoginRequest;
 import com.paymilli.paymilli.domain.member.dto.request.TokenRequest;
@@ -9,7 +10,6 @@ import com.paymilli.paymilli.domain.member.dto.response.LoginResponse;
 import com.paymilli.paymilli.domain.member.dto.response.TokenResponse;
 import com.paymilli.paymilli.domain.member.jwt.JwtFilter;
 import com.paymilli.paymilli.domain.member.jwt.TokenProvider;
-import com.paymilli.paymilli.domain.member.service.MemberService;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponse;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
@@ -54,7 +54,7 @@ public class MemberController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
         HttpServletResponse response) {
 
-        TokenRequest tokenRequest = new TokenRequest(loginRequest.getMemberId(),
+        TokenRequest tokenRequest = new TokenRequest(loginRequest.getLoginId(),
             loginRequest.getPassword());
 
         TokenResponse tokenResponse = memberService.issueTokens(tokenRequest);

@@ -9,11 +9,11 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface MemberRepository extends JpaRepository<MemberEntity, UUID> {
+public interface JPAMemberRepository extends JpaRepository<MemberEntity, UUID> {
 
-    Optional<MemberEntity> findByMemberId(String memberId);
+    Optional<MemberEntity> findByLoginId(String loginId);
 
-    List<MemberEntity> findByMemberIdOrEmail(String memberId, String email);
+    List<MemberEntity> findByLoginIdOrEmail(String loginId, String email);
 
     Optional<MemberEntity> findByIdAndDeleted(UUID uuid, boolean deleted);
 }

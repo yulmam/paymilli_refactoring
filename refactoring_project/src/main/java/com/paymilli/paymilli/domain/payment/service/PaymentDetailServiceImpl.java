@@ -5,8 +5,8 @@ import com.paymilli.paymilli.domain.payment.client.PaymentClient;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentInfoRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentRefundRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.cardcompany.PaymentInfoResponse;
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.Payment;
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentDetailEntity;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentStatus;
 import com.paymilli.paymilli.domain.payment.exception.CardException;
 import com.paymilli.paymilli.domain.payment.exception.PaymentCardException;
@@ -31,32 +31,32 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
 
     @Transactional
     @Override
-    public void requestPaymentGroup(PaymentGroup paymentGroup) {
+    public void requestPaymentGroup(PaymentEntity paymentEntity) {
 
         int paymentIdx = 0;
-        String[] approveNumbers = new String[paymentGroup.getPayments().size()];
+        String[] approveNumbers = new String[paymentEntity.getPaymentDetailEntities().size()];
 
-        paymentGroupRepository.save(paymentGroup);
+        paymentGroupRepository.save(paymentEntity);
 
         try {
             // 순서대로 결제 진행
-            for (; paymentIdx < paymentGroup.getPayments().size(); paymentIdx++) {
+            for (; paymentIdx < paymentEntity.getPaymentDetailEntities().size(); paymentIdx++) {
 
-                Payment payment = paymentGroup.getPayments().get(paymentIdx);
+                PaymentDetailEntity paymentDetailEntity = paymentEntity.getPaymentDetailEntities().get(paymentIdx);
 
                 // 결제
                 String approveNumber = requestSinglePayment(
-                    paymentGroup.getPayments().get(paymentIdx), paymentGroup.getStoreName());
+                    paymentEntity.getPaymentDetailEntities().get(paymentIdx), paymentEntity.getStoreName());
 
                 // 승인 번호 저장
-                payment.setApproveNumber(approveNumber);
+                paymentDetailEntity.setApproveNumber(approveNumber);
                 approveNumbers[paymentIdx] = approveNumber;
 
-                paymentRepository.save(payment);
+                paymentRepository.save(paymentDetailEntity);
             }
 
             // 성공시 결제 내역 DB 저장
-            paymentGroup.setStatus(PaymentStatus.PAYMENT);
+            paymentEntity.setStatus(PaymentStatus.PAYMENT);
 
         } catch (ClientException e) {
 
@@ -69,30 +69,30 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
             }
 
             // 에러 발생 카드
-            Payment payment = paymentGroup.getPayments().get(paymentIdx);
-            String cardNum = payment.getCardEntity().getCardNumber();
+            PaymentDetailEntity paymentDetailEntity = paymentEntity.getPaymentDetailEntities().get(paymentIdx);
+            String cardNum = paymentDetailEntity.getCardEntity().getCardNumber();
 
             log.info("=== throw PAYMENT_ERROR to client ===");
             throw new CardException(BaseResponseStatus.PAYMENT_ERROR,
                 e,
-                payment.getCardEntity().getCardName(),
+                paymentDetailEntity.getCardEntity().getCardName(),
                 cardNum.substring(cardNum.length() - 4),
                 e.getMessage());
 
         }
     }
 
-    private String requestSinglePayment(Payment payment, String storeName) {
+    private String requestSinglePayment(PaymentDetailEntity paymentDetailEntity, String storeName) {
 
-        CardEntity cardEntity = payment.getCardEntity();
+        CardEntity cardEntity = paymentDetailEntity.getCardEntity();
 
         log.info("cardEntity: " + cardEntity.getCardNumber() + "@@@@@@@@@@@@@@@");
 
         // 결제 요청
         PaymentInfoResponse response = paymentClient.requestPayment(
-            new PaymentInfoRequest(storeName, payment.getPrice(), cardEntity.getCardNumber(),
+            new PaymentInfoRequest(storeName, paymentDetailEntity.getPrice(), cardEntity.getCardNumber(),
                 cardEntity.getCVC(),
-                cardEntity.getExpirationDate(), payment.getInstallment()));
+                cardEntity.getExpirationDate(), paymentDetailEntity.getInstallment()));
 
         log.info("response:" + response.getApproveNumber());
         return response.getApproveNumber();
@@ -101,16 +101,16 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
 
     @Transactional
     @Override
-    public boolean refundPaymentGroup(PaymentGroup paymentGroup) {
+    public boolean refundPaymentGroup(PaymentEntity paymentEntity) {
 
-        int paymentGroupSize = paymentGroup.getPayments().size();
+        int paymentGroupSize = paymentEntity.getPaymentDetailEntities().size();
 
         for (int i = 0; i < paymentGroupSize; i++) {
-            requestSingleRefund(paymentGroup.getPayments().get(i).getApproveNumber());
+            requestSingleRefund(paymentEntity.getPaymentDetailEntities().get(i).getApproveNumber());
         }
 
         // 환불 처리
-        paymentGroup.setStatus(PaymentStatus.REFUND);
+        paymentEntity.setStatus(PaymentStatus.REFUND);
 
         // 일단 전부 환불 성공 처리
         return true;

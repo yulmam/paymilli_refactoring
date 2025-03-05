@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.member.client;
+package com.paymilli.paymilli.domain.member.infrastructure;
 
 import com.paymilli.paymilli.domain.member.dto.client.CardCompLoginRequest;
 import com.paymilli.paymilli.domain.member.dto.client.CardCompLoginResponse;

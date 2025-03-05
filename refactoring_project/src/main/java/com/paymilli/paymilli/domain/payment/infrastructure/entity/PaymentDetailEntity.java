@@ -29,7 +29,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "payment")
-public class Payment {
+public class PaymentDetailEntity {
 
     @Id
     @GeneratedValue
@@ -42,7 +42,7 @@ public class Payment {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "payment_group_id")
-    private PaymentGroup paymentGroup;
+    private PaymentEntity paymentEntity;
 
     // 가격
     @Column(nullable = false)
@@ -72,8 +72,8 @@ public class Payment {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
-    public static Payment toEntity(DemandPaymentCardRequest demandPaymentCardRequest) {
-        return Payment.builder()
+    public static PaymentDetailEntity toEntity(DemandPaymentCardRequest demandPaymentCardRequest) {
+        return PaymentDetailEntity.builder()
             .price(demandPaymentCardRequest.getChargePrice())
             .installment(demandPaymentCardRequest.getInstallment())
             .build();
@@ -95,8 +95,8 @@ public class Payment {
             .build();
     }
 
-    public void setPaymentGroup(PaymentGroup paymentGroup) {
-        this.paymentGroup = paymentGroup;
+    public void setPaymentEntity(PaymentEntity paymentEntity) {
+        this.paymentEntity = paymentEntity;
     }
 
     public void setCardEntity(CardEntity cardEntity) {

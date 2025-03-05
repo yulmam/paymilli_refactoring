@@ -1,21 +1,13 @@
 package com.paymilli.paymilli.domain.member.infrastructure.entity;
 
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
+import com.paymilli.paymilli.domain.member.domain.Member;
+import com.paymilli.paymilli.domain.member.domain.MemberProfile;
 import com.paymilli.paymilli.domain.member.dto.request.AddMemberRequest;
 import com.paymilli.paymilli.domain.member.dto.response.MemberInfoResponse;
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,14 +34,14 @@ public class MemberEntity {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<CardEntity> cardEntities = new ArrayList<CardEntity>();
 
-    @OneToMany(mappedBy = "member")
-    private List<PaymentGroup> paymentGroups = new ArrayList<PaymentGroup>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<PaymentEntity> paymentEntities = new ArrayList<PaymentEntity>();
 
     @Column(nullable = false)
-    private String memberId;
+    private String loginId;
 
     @Column(nullable = false)
     private String password;
@@ -99,7 +91,7 @@ public class MemberEntity {
     public static MemberEntity toEntity(AddMemberRequest addMemberRequest, String userKey,
                                         LocalDate birthday, String encodePassword, String encodePaymentPassword, String email) {
         return MemberEntity.builder()
-            .memberId(addMemberRequest.getMemberId())
+            .loginId(addMemberRequest.getLoginId())
             .password(encodePassword)
             .name(addMemberRequest.getName())
             .birthday(birthday)
@@ -112,17 +104,6 @@ public class MemberEntity {
             .build();
     }
 
-    //    연관관계 편의 메서드
-    public void addCard(CardEntity cardEntity) {
-        cardEntities.add(cardEntity);
-        cardEntity.setMemberEntity(this);
-    }
-
-    //    연관관계 편의 메서드
-    public void addPaymentGroup(PaymentGroup paymentGroup) {
-        paymentGroups.add(paymentGroup);
-        paymentGroup.setMemberEntity(this);
-    }
 
     public void setPaymentPassword(String paymentPassword) {
         this.paymentPassword = paymentPassword;
@@ -143,7 +124,7 @@ public class MemberEntity {
 
     public MemberInfoResponse makeResponse() {
         return MemberInfoResponse.builder()
-            .memberId(memberId)
+            .loginId(loginId)
             .name(name)
             .email(email)
             .gender(gender)
@@ -159,5 +140,43 @@ public class MemberEntity {
         gender = addMemberRequest.getGender();
         phone = addMemberRequest.getPhone();
         paymentPassword = encodePaymentPassword;
+    }
+
+    public Member toModel(){
+        return Member.builder()
+                .id(id)
+                .loginId(loginId)
+                .password(password)
+                .memberProfile(MemberProfile.builder()
+                        .name(name)
+                        .birthday(birthday)
+                        .gender(gender)
+                        .role(role)
+                        .email(email)
+                        .phone(phone)
+                        .build())
+                .paymentPassword(paymentPassword)
+                .userKey(userKey)
+                .build();
+    }
+    public static MemberEntity fromModel(Member member, CardEntity cardEntity){
+        MemberEntity memberEntity = new MemberEntity();
+        memberEntity.id = member.getId();
+        memberEntity.loginId = member.getLoginId();
+        memberEntity.password = member.getPassword();
+
+        MemberProfile memberProfile = member.getMemberProfile();
+        memberEntity.name = memberProfile.getName();
+        memberEntity.birthday = memberProfile.getBirthday();
+        memberEntity.gender = memberProfile.getGender();
+        memberEntity.role = memberProfile.getRole();
+        memberEntity.email = memberProfile.getEmail();
+        memberEntity.phone = memberProfile.getPhone();
+
+        memberEntity.mainCardEntity = cardEntity;
+        memberEntity.paymentPassword = member.getPaymentPassword();
+        memberEntity.userKey = member.getUserKey();
+        memberEntity.deleted = member.isDeleted();
+        return memberEntity;
     }
 }

@@ -1,7 +1,11 @@
 package com.paymilli.paymilli.domain.member.service;
 
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
-import com.paymilli.paymilli.domain.member.client.MemberClient;
+import com.paymilli.paymilli.domain.member.controller.port.MemberService;
+import com.paymilli.paymilli.domain.member.domain.Member;
+import com.paymilli.paymilli.domain.member.domain.vo.MemberCreate;
+import com.paymilli.paymilli.domain.member.domain.vo.MemberUpdate;
+import com.paymilli.paymilli.domain.member.infrastructure.MemberClient;
 import com.paymilli.paymilli.domain.member.dto.client.CardCompLoginRequest;
 import com.paymilli.paymilli.domain.member.dto.client.CardCompLoginResponse;
 import com.paymilli.paymilli.domain.member.dto.request.AddMemberRequest;
@@ -13,7 +17,8 @@ import com.paymilli.paymilli.domain.member.dto.response.TokenResponse;
 import com.paymilli.paymilli.domain.member.dto.response.ValidatePaymentPasswordResponse;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import com.paymilli.paymilli.domain.member.jwt.TokenProvider;
-import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.JPAMemberRepository;
+import com.paymilli.paymilli.domain.member.service.port.MemberRepository;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.util.RedisUtil;
@@ -33,7 +38,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class MemberService {
+public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -42,10 +47,10 @@ public class MemberService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
 
-    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-        TokenProvider tokenProvider,
-        MemberClient memberClient, AuthenticationManagerBuilder authenticationManagerBuilder,
-        RedisUtil redisUtil) {
+    public MemberServiceImpl(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+                             TokenProvider tokenProvider,
+                             MemberClient memberClient, AuthenticationManagerBuilder authenticationManagerBuilder,
+                             RedisUtil redisUtil) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
@@ -56,42 +61,42 @@ public class MemberService {
 
     @Transactional
     public void addMember(AddMemberRequest addMemberRequest) {
-        Optional<MemberEntity> memberOpt = memberRepository.findByMemberId(
-            addMemberRequest.getMemberId());
+        Optional<Member> optionalMember = memberRepository.findByLoginId(addMemberRequest.getLoginId());
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        LocalDate birthday = LocalDate.parse(addMemberRequest.getBirthday(), formatter);
-
-        if (memberOpt.isPresent()) {
-            MemberEntity memberEntity = memberOpt.get();
-
-            if (memberEntity.isDeleted()) {
-                memberEntity.create();
-                memberEntity.update(addMemberRequest,
-                    passwordEncoder.encode(addMemberRequest.getPassword()),
-                    passwordEncoder.encode(addMemberRequest.getPaymentPassword()), birthday);
-
-                return;
-            }
-
-            throw new BaseException(BaseResponseStatus.MEMBER_ALREADY_EXIST);
+        if (optionalMember.isPresent()) {
+            Member member = optionalMember.get();
+            //todo memberUpdate 생성
+            MemberUpdate memberUpdate = null;
+            Member updatedMember = member.update(memberUpdate, passwordEncoder);
+            memberRepository.save(updatedMember);
+            return;
         }
 
-        String email = addMemberRequest.getMemberId() + "@ssafy.com";
 
         CardCompLoginResponse cardCompLoginResponse = memberClient.validateAndGetUserKey(
-            new CardCompLoginRequest(email));
+            new CardCompLoginRequest(makeEmail(addMemberRequest.getLoginId())));
 
-        MemberEntity memberEntity = MemberEntity.toEntity(addMemberRequest, cardCompLoginResponse.getUserKey(),
-            birthday, passwordEncoder.encode(addMemberRequest.getPassword()),
-            passwordEncoder.encode(addMemberRequest.getPaymentPassword()), email);
+        MemberCreate memberCreate = MemberCreate.builder()
+                .loginId(addMemberRequest.getLoginId())
+                .rawPassword(addMemberRequest.getPassword())
+                .name(addMemberRequest.getName())
+                .birthday(addMemberRequest.getBirthday())
+                .gender(addMemberRequest.getGender())
+                .phone(addMemberRequest.getPhone())
+                .rawPaymentPassword(addMemberRequest.getPaymentPassword())
+                .userKey(cardCompLoginResponse.getUserKey())
+                .build();
 
-        memberRepository.save(memberEntity);
+        Member member = Member.create(memberCreate, passwordEncoder);
+
+        memberRepository.save(member);
     }
 
     @Transactional
     public MemberInfoResponse getMemberInfo(UUID memberId) {
-        return getMemberById(memberId).makeResponse();
+        Member member = memberRepository.findByIdAndDeleted(memberId, false)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
+        return MemberInfoResponse.from(member);
     }
 
     @Transactional
@@ -112,7 +117,7 @@ public class MemberService {
     @Transactional
     public TokenResponse issueTokens(TokenRequest tokenRequest) {
         UsernamePasswordAuthenticationToken token =
-            new UsernamePasswordAuthenticationToken(tokenRequest.getMemberId(),
+            new UsernamePasswordAuthenticationToken(tokenRequest.getLoginId(),
                 tokenRequest.getPassword());
 
         Authentication authentication = null;
@@ -141,27 +146,31 @@ public class MemberService {
     public void updatePaymentPassword(UUID memberId,
         String paymentPasswordToken,
         UpdatePaymentPasswordRequest updatePaymentPasswordRequest) {
-        MemberEntity memberEntity = getMemberById(memberId);
-
+        Member member= memberRepository.findByIdAndDeleted(memberId, false)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));;
+        //토큰이 유효한지 확인
         if (!redisUtil.hasKey(paymentPasswordToken)) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_TOKEN_NOT_FOUND);
         }
 
-        if (isEqualPassword(memberEntity.getPaymentPassword(),
-            updatePaymentPasswordRequest.getPaymentPassword())) {
+        //다시한번 비밀번호 확인
+        if (passwordEncoder.matches(updatePaymentPasswordRequest.getPaymentPassword(), member.getPaymentPassword()
+            )) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_SAME_ERROR);
         }
 
-        memberEntity.setPaymentPassword(
-            passwordEncoder.encode(updatePaymentPasswordRequest.getPaymentPassword()));
+        Member updatedMember = member.updatePaymentPassword(updatePaymentPasswordRequest.getPaymentPassword(), passwordEncoder);
+
+        memberRepository.save(updatedMember);
 
         redisUtil.removeDataFromRedis(paymentPasswordToken);
     }
 
     @Transactional
     public void deleteMember(UUID memberId) {
-        MemberEntity memberEntity = getMemberById(memberId);
-        memberEntity.delete();
+        Member member = memberRepository.findByIdAndDeleted(memberId, false)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
+        member.delete();
 
         memberEntity.getCardEntities()
             .forEach(CardEntity::delete);
@@ -170,28 +179,23 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberEntity getMemberById(UUID memberId) {
-        MemberEntity memberEntity = memberRepository.findByIdAndDeleted(memberId, false)
+    private Member getMemberById(UUID memberId) {
+        Member member= memberRepository.findByIdAndDeleted(memberId, false)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
-        if (memberEntity.isDeleted()) {
-            log.info("삭제된 회원 조회");
-            throw new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND);
-        }
 
-        return memberEntity;
+        return member;
     }
 
     @Transactional
     public ValidatePaymentPasswordResponse validatePaymentPassword(UUID memberId,
         ValidatePaymentPasswordRequest validatePaymentPasswordRequest) {
 
-        MemberEntity memberEntity = memberRepository.findById(memberId)
+        MemberEntity memberEntity = JPAMemberRepository.findById(memberId)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
         log.info(validatePaymentPasswordRequest.getPaymentPassword());
-        if (!isEqualPassword(memberEntity.getPaymentPassword(),
-            validatePaymentPasswordRequest.getPaymentPassword())) {
+        if (passwordEncoder.matches(validatePaymentPasswordRequest.getPaymentPassword(), memberEntity.getPaymentPassword())) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_ERROR);
         }
 
@@ -206,7 +210,8 @@ public class MemberService {
         return new ValidatePaymentPasswordResponse(paymentPasswordToken);
     }
 
-    public boolean isEqualPassword(String password, String input) {
-        return passwordEncoder.matches(input, password);
+
+    private String makeEmail(String loginId){
+        return loginId + "@ssafy.com";
     }
 }

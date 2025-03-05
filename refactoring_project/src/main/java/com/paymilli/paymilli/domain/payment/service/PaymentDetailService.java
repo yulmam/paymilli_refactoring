@@ -1,13 +1,13 @@
 package com.paymilli.paymilli.domain.payment.service;
 
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentGroup;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public interface PaymentDetailService {
 
-    void requestPaymentGroup(PaymentGroup paymentGroup);
+    void requestPaymentGroup(PaymentEntity paymentEntity);
 
-    boolean refundPaymentGroup(PaymentGroup paymentGroup);
+    boolean refundPaymentGroup(PaymentEntity paymentEntity);
 
 }

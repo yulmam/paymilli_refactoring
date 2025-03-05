@@ -1,7 +1,9 @@
 package com.paymilli.paymilli.domain.card.domain;
 
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardType;
-import com.paymilli.paymilli.domain.card.vo.CardCreate;
+import com.paymilli.paymilli.domain.card.domain.vo.CardCreate;
+import com.paymilli.paymilli.global.exception.BaseException;
+import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -50,7 +52,7 @@ public class Card {
 
     public Card create() {
         if(!this.deleted)
-            throw new IllegalArgumentException("이미 등록된 card입니다.");
+            throw new BaseException(BaseResponseStatus.CARD_ALREADY_REGISTERED);
         return Card.builder()
                 .id(id)
                 .memberId(memberId)
@@ -67,7 +69,17 @@ public class Card {
 
 
     public static Card create(CardCreate cardCreate){
-        return Card.builder().build();
+        return Card.builder()
+                .memberId(cardCreate.getMemberId())
+                .cardNumber(cardCreate.getCardNumber())
+                .cvc(cardCreate.getCvc())
+                .expirationDate(cardCreate.getExpirationDate())
+                .cardName(cardCreate.getCardName())
+                .cardHolderName(cardCreate.getCardHolderName())
+                .cardImage(cardCreate.getCardImage())
+                .cardType(cardCreate.getCardType())
+                .deleted(false)
+                .build();
     }
 
 }

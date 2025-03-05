@@ -1,10 +1,9 @@
 package com.paymilli.paymilli.domain.card.infrastructure;
 
-import com.paymilli.paymilli.Member;
 import com.paymilli.paymilli.domain.card.domain.Card;
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
 import com.paymilli.paymilli.domain.card.service.port.CardRepository;
-import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.JPAMemberRepository;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,7 @@ import java.util.UUID;
 public class CardRepositoryImpl implements CardRepository {
 
     JPACardRepository jpaCardRepository;
-    MemberRepository memberRepository;
+    JPAMemberRepository JPAMemberRepository;
 
     @Override
     public Optional<Card> findByCardNumberAndMemberId(String cardNumber, UUID memberId) {
@@ -53,7 +52,12 @@ public class CardRepositoryImpl implements CardRepository {
 
     @Override
     public void save(Card card) {
-        MemberEntity memberEntity = memberRepository.getReferenceById(card.getMemberId());
+        MemberEntity memberEntity = JPAMemberRepository.getReferenceById(card.getMemberId());
         jpaCardRepository.save(CardEntity.fromModel(card, memberEntity));
+    }
+
+    @Override
+    public Optional<Card> findMainCardByMemberId(UUID memberId) {
+        return jpaCardRepository.findMainCardByMemberId(memberId).map(CardEntity::toModel);
     }
 }

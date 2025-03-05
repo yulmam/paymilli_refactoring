@@ -45,7 +45,7 @@ public class PaymentClient {
                         .flatMap(errorBody -> Mono.error(
                             new PaymentCardException("Over the limit: " + errorBody)));
                 } else if (statusCode == HttpStatus.PAYMENT_REQUIRED) {
-                    // 402 Payment Required 처리 / 잔액 부족
+                    // 402 PaymentDetailEntity Required 처리 / 잔액 부족
                     return clientResponse.bodyToMono(String.class)
                         .flatMap(errorBody -> Mono.error(
                             new PaymentCardException("Lack of balance: " + errorBody)));

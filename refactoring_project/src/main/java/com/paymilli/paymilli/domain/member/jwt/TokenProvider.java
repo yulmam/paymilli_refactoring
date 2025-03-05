@@ -1,7 +1,7 @@
 package com.paymilli.paymilli.domain.member.jwt;
 
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
-import com.paymilli.paymilli.domain.member.infrastructure.MemberRepository;
+import com.paymilli.paymilli.domain.member.infrastructure.JPAMemberRepository;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.util.RedisUtil;
@@ -39,7 +39,7 @@ public class TokenProvider implements InitializingBean {
     private final long accessTokenValidityInMilliseconds;
     private final long refreshTokenValidityInMilliseconds;
     private final RedisUtil redisUtil;
-    private final MemberRepository memberRepository;
+    private final JPAMemberRepository JPAMemberRepository;
     //    private final RedisTemplate<String, String> redisTemplate;
     private Key key;
 
@@ -47,14 +47,14 @@ public class TokenProvider implements InitializingBean {
         @Value("${jwt.secret}") String secret,
         @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds,
         RedisTemplate<String, String> redisTemplate, RedisUtil redisUtil,
-        MemberRepository memberRepository) {
+        JPAMemberRepository JPAMemberRepository) {
         this.secret = secret;
         this.accessTokenValidityInMilliseconds = 86400 * 1000;
 //        this.accessTokenValidityInMilliseconds = 10;
         this.refreshTokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
         this.redisUtil = redisUtil;
 //        this.refreshTokenValidityInMilliseconds = 10;
-        this.memberRepository = memberRepository;
+        this.JPAMemberRepository = JPAMemberRepository;
     }
 
     @Override
@@ -127,11 +127,8 @@ public class TokenProvider implements InitializingBean {
     }
 
     private UUID getUUID(Authentication authentication) {
-        String memberID = authentication.getName();
-
-        System.out.println(memberID);
-
-        MemberEntity memberEntity = memberRepository.findByMemberId(memberID).orElseThrow();
+        String loginID = authentication.getName();
+        MemberEntity memberEntity = JPAMemberRepository.findByLoginId(loginID).orElseThrow();
         return memberEntity.getId();
     }
 

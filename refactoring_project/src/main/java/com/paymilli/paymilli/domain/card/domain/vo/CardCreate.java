@@ -1,13 +1,15 @@
-package com.paymilli.paymilli.domain.card.vo;
+package com.paymilli.paymilli.domain.card.domain.vo;
 
 import com.paymilli.paymilli.domain.card.domain.CardInfo;
 import com.paymilli.paymilli.domain.card.dto.client.CardValidationResponse;
 import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardType;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.util.UUID;
 
+@Getter
 public class CardCreate {
     private final UUID memberId;
     private final String cardNumber;

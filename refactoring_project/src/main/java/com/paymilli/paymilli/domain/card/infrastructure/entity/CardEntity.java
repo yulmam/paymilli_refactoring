@@ -2,11 +2,7 @@ package com.paymilli.paymilli.domain.card.infrastructure.entity;
 
 
 import com.paymilli.paymilli.domain.card.domain.Card;
-import com.paymilli.paymilli.domain.card.dto.client.CardValidationResponse;
-import com.paymilli.paymilli.domain.card.dto.request.AddCardRequest;
-import com.paymilli.paymilli.domain.card.dto.response.CardResponse;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.Payment;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -97,7 +93,7 @@ public class CardEntity {
         cardEntity.id = card.getId();
         cardEntity.memberEntity = memberEntity;
         cardEntity.cardNumber = card.getCardInfo().getCardNumber();
-        cardEntity.CVC = card.getCardInfo().getCVC();
+        cardEntity.CVC = card.getCardInfo().getCvc();
         cardEntity.expirationDate = card.getCardInfo().getExpirationDate();
         cardEntity.cardName = card.getCardName();
         cardEntity.cardHolderName = card.getCardHolderName();
@@ -111,7 +107,7 @@ public class CardEntity {
                 .id(id)
                 .memberId(memberEntity.getId())
                 .cardNumber(cardNumber)
-                .CVC(CVC)
+                .cvc(CVC)
                 .expirationDate(expirationDate)
                 .cardName(cardName)
                 .cardHolderName(cardHolderName)

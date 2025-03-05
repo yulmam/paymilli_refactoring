@@ -31,10 +31,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @NoArgsConstructor
 @Table(name = "payment_group")
-public class PaymentGroup {
+public class PaymentEntity {
 
-    @OneToMany(mappedBy = "paymentGroup")
-    private final List<Payment> payments = new ArrayList<Payment>();
+    @OneToMany(mappedBy = "paymentEntity")
+    private final List<PaymentDetailEntity> paymentDetailEntities = new ArrayList<PaymentDetailEntity>();
     @Id
     @GeneratedValue
     @Column(columnDefinition = "BINARY(16)")
@@ -75,16 +75,16 @@ public class PaymentGroup {
     private LocalDateTime updatedAt;
 
     @Builder
-    public PaymentGroup(int totalPrice, LocalDateTime transmissionDate, String storeName,
-        String productName) {
+    public PaymentEntity(int totalPrice, LocalDateTime transmissionDate, String storeName,
+                         String productName) {
         this.totalPrice = totalPrice;
         this.transmissionDate = transmissionDate;
         this.storeName = storeName;
         this.productName = productName;
     }
 
-    public static PaymentGroup toEntity(DemandPaymentRequest demandPaymentRequest) {
-        return PaymentGroup.builder()
+    public static PaymentEntity toEntity(DemandPaymentRequest demandPaymentRequest) {
+        return PaymentEntity.builder()
             .totalPrice(demandPaymentRequest.getTotalPrice())
             .transmissionDate(LocalDateTime.now())
             .storeName(demandPaymentRequest.getStoreName())
@@ -107,16 +107,16 @@ public class PaymentGroup {
             .price(totalPrice)
             .date(transmissionDate)
             .paymentResponse(
-                payments.stream()
-                    .map(Payment::makeResponse)
+                paymentDetailEntities.stream()
+                    .map(PaymentDetailEntity::makeResponse)
                     .toList()
             )
             .build();
     }
 
-    public void addPayment(Payment payment) {
-        payments.add(payment);
-        payment.setPaymentGroup(this);
+    public void addPayment(PaymentDetailEntity paymentDetailEntity) {
+        paymentDetailEntities.add(paymentDetailEntity);
+        paymentDetailEntity.setPaymentEntity(this);
     }
 
 }
