@@ -11,7 +11,7 @@ public class PaymentGroupResponse {
 
     private String id;
     private String storeName;
-    private int price;
+    private long price;
     private LocalDateTime date;
     private List<PaymentResponse> paymentResponse;
 }

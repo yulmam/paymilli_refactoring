@@ -40,4 +40,9 @@ public class MemberRepositoryImpl implements MemberRepository {
     public void save(Member member) {
         jpaMemberRepository.save(MemberEntity.fromModel(member, jpaCardRepository.getReferenceById(member.getMainCardId())));
     }
+
+    @Override
+    public Optional<Member> findById(UUID memberId) {
+        return jpaMemberRepository.findById(memberId).map(MemberEntity::toModel);
+    }
 }

@@ -1,6 +1,9 @@
 package com.paymilli.paymilli.domain.member.service;
 
+import com.paymilli.paymilli.domain.card.controller.port.CardService;
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
+import com.paymilli.paymilli.domain.card.service.CardServiceImpl;
+import com.paymilli.paymilli.domain.card.service.port.CardRepository;
 import com.paymilli.paymilli.domain.member.controller.port.MemberService;
 import com.paymilli.paymilli.domain.member.domain.Member;
 import com.paymilli.paymilli.domain.member.domain.vo.MemberCreate;
@@ -41,17 +44,19 @@ import org.springframework.stereotype.Service;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
+    private final CardService cardService;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final MemberClient memberClient;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
 
-    public MemberServiceImpl(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+    public MemberServiceImpl(MemberRepository memberRepository, CardRepository cardRepository, CardService cardService, PasswordEncoder passwordEncoder,
                              TokenProvider tokenProvider,
                              MemberClient memberClient, AuthenticationManagerBuilder authenticationManagerBuilder,
                              RedisUtil redisUtil) {
         this.memberRepository = memberRepository;
+        this.cardService = cardService;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.memberClient = memberClient;
@@ -110,7 +115,6 @@ public class MemberServiceImpl implements MemberService {
 
         String savedRefreshToken = tokenProvider.getRefreshToken(memberId.toString());
 
-        System.out.println(savedRefreshToken);
         return savedRefreshToken != null;
     }
 
@@ -172,30 +176,22 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
         member.delete();
 
-        memberEntity.getCardEntities()
-            .forEach(CardEntity::delete);
+        //todo event에 대해 공부하고 카드 삭제 event를 발행해서 member에서 card로 삭제 이벤트를 발행하자
+        cardService.deleteCardByMemberId(memberId);
 
+        memberRepository.save(member);
         tokenProvider.removeRefreshToken(memberId);
-    }
-
-    @Transactional
-    private Member getMemberById(UUID memberId) {
-        Member member= memberRepository.findByIdAndDeleted(memberId, false)
-            .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
-
-
-        return member;
     }
 
     @Transactional
     public ValidatePaymentPasswordResponse validatePaymentPassword(UUID memberId,
         ValidatePaymentPasswordRequest validatePaymentPasswordRequest) {
 
-        MemberEntity memberEntity = JPAMemberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
 
         log.info(validatePaymentPasswordRequest.getPaymentPassword());
-        if (passwordEncoder.matches(validatePaymentPasswordRequest.getPaymentPassword(), memberEntity.getPaymentPassword())) {
+        if (passwordEncoder.matches(validatePaymentPasswordRequest.getPaymentPassword(), member.getPaymentPassword())) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_ERROR);
         }
 

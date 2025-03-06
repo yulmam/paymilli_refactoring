@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.payment.dto.response.cardcompany;
+package com.paymilli.paymilli.domain.payment.infrastructure.dto;
 
 import org.springframework.http.HttpStatusCode;
 

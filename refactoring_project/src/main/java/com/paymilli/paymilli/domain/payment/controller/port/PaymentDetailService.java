@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.payment.service;
+package com.paymilli.paymilli.domain.payment.controller.port;
 
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 import org.springframework.stereotype.Service;

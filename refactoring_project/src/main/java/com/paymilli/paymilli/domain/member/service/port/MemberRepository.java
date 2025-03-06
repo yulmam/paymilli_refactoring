@@ -15,4 +15,6 @@ public interface MemberRepository {
     Optional<Member> findByIdAndDeleted(UUID id, boolean deleted);
 
     void save(Member member);
+
+    Optional<Member> findById(UUID memberId);
 }

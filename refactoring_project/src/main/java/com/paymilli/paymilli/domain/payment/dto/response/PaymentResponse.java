@@ -12,7 +12,7 @@ public class PaymentResponse {
     private String cardName;
     private String cardImg;
     private int installment;
-    private int chargePrice;
+    private long chargePrice;
     private CardType cardType;
     private String approveNumber;
 }

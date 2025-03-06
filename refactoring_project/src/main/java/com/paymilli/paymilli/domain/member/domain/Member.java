@@ -91,6 +91,10 @@ public class Member {
                 .build();
     }
 
+    public boolean checkPaymentPassword(String rawPaymentPassword, PasswordEncoder passwordEncoder){
+        return paymentPassword == passwordEncoder.encode(rawPaymentPassword);
+    }
+
     public Member updateMainCardId(UUID mainCardId){
         return Member.builder()
                 .id(this.id)

@@ -14,4 +14,6 @@ public interface CardService {
     void deleteCard(UUID cardId, UUID userId);
 
     void changeMainCard(UUID cardId, UUID userId);
+
+    void deleteCardByMemberId(UUID memberId);
 }

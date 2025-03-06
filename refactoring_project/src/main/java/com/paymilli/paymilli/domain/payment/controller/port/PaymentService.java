@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.payment.service;
+package com.paymilli.paymilli.domain.payment.controller.port;
 
 import com.paymilli.paymilli.domain.payment.dto.request.ApprovePaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;

@@ -5,7 +5,7 @@ import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.RefundPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.ApproveResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.DemandResponse;
-import com.paymilli.paymilli.domain.payment.service.PaymentService;
+import com.paymilli.paymilli.domain.payment.controller.port.PaymentService;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponse;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;

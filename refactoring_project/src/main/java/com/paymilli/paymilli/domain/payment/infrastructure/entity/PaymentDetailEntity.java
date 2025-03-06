@@ -1,7 +1,9 @@
 package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
-import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentCardRequest;
+import com.paymilli.paymilli.domain.payment.domain.PaymentDetail;
+import com.paymilli.paymilli.domain.payment.domain.vo.CardInfoInPaymentDetail;
+import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentDetailRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -28,7 +30,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "payment")
+@Table(name = "payment_detail")
 public class PaymentDetailEntity {
 
     @Id
@@ -46,7 +48,7 @@ public class PaymentDetailEntity {
 
     // 가격
     @Column(nullable = false)
-    private int price;
+    private long price;
 
     // 할부개월
     @Column(nullable = false)
@@ -72,10 +74,10 @@ public class PaymentDetailEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
-    public static PaymentDetailEntity toEntity(DemandPaymentCardRequest demandPaymentCardRequest) {
+    public static PaymentDetailEntity toEntity(DemandPaymentDetailRequest demandPaymentDetailRequest) {
         return PaymentDetailEntity.builder()
-            .price(demandPaymentCardRequest.getChargePrice())
-            .installment(demandPaymentCardRequest.getInstallment())
+            .price(demandPaymentDetailRequest.getChargePrice())
+            .installment(demandPaymentDetailRequest.getInstallment())
             .build();
     }
 
@@ -101,5 +103,25 @@ public class PaymentDetailEntity {
 
     public void setCardEntity(CardEntity cardEntity) {
         this.cardEntity = cardEntity;
+    }
+
+
+
+    public PaymentDetail toModel(){
+        return PaymentDetail.builder()
+                .id(id)
+                .cardId(cardEntity.getId())
+                .paymentId(paymentEntity.getId())
+                .price(price)
+                .installment(installment)
+                .cardInfoInPaymentDetail(CardInfoInPaymentDetail.builder()
+                        .cardId(cardEntity.getId())
+                        .cardName(cardEntity.getCardName())
+                        .cardImg(cardEntity.getCardImage())
+                        .cardType(cardEntity.getCardType())
+                        .build())
+                .approveNumber(approveNumber)
+                .deleted(deleted)
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
+import com.paymilli.paymilli.domain.payment.domain.Payment;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
 import jakarta.persistence.CascadeType;
@@ -30,21 +31,21 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "payment_group")
+@Table(name = "payment")
 public class PaymentEntity {
 
-    @OneToMany(mappedBy = "paymentEntity")
-    private final List<PaymentDetailEntity> paymentDetailEntities = new ArrayList<PaymentDetailEntity>();
+
     @Id
     @GeneratedValue
     @Column(columnDefinition = "BINARY(16)")
-
     private UUID id;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "member_id")
     private MemberEntity memberEntity;
+
     @Column(name = "total_price", nullable = false)
-    private int totalPrice;
+    private long totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
@@ -58,6 +59,9 @@ public class PaymentEntity {
 
     @Column(name = "product_name", nullable = false)
     private String productName;
+
+    @OneToMany(mappedBy = "paymentEntity")
+    private List<PaymentDetailEntity> paymentDetailEntities;
 
     // 삭제 여부
     @ColumnDefault("false")
@@ -74,8 +78,25 @@ public class PaymentEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
+
+    public Payment toModel(){
+        return Payment.builder()
+                .id(id)
+                .memberId(memberEntity.getId())
+                .totalPrice(totalPrice)
+                .status(status)
+                .transmissionDate(transmissionDate)
+                .storeName(storeName)
+                .productName(productName)
+                .paymentDetails(paymentDetailEntities.stream()
+                        .map(paymentDetailEntity -> paymentDetailEntity.toModel())
+                        .toList())
+                .deleted(deleted)
+                .build();
+    }
+
     @Builder
-    public PaymentEntity(int totalPrice, LocalDateTime transmissionDate, String storeName,
+    public PaymentEntity(long totalPrice, LocalDateTime transmissionDate, String storeName,
                          String productName) {
         this.totalPrice = totalPrice;
         this.transmissionDate = transmissionDate;

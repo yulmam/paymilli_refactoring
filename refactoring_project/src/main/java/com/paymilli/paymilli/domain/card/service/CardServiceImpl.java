@@ -74,7 +74,6 @@ public class CardServiceImpl implements CardService {
         cardRepository.save(card);
 
 
-        // todo : memberEntity 와 member 분리 이후 메인 카드 등록해야한다.
         if(member.getMainCardId() == null){
             Member updatedMember = member.updateMainCardId(card.getId());
             memberRepository.save(updatedMember);
@@ -139,10 +138,20 @@ public class CardServiceImpl implements CardService {
             throw new BaseException(BaseResponseStatus.ALREADY_MAIN_CARD);
         }
         // todo : memberEntity와 member 분리 이후 수행
-
-
         Member updatedMember = member.updateMainCardId(card.getId());
 
         memberRepository.save(updatedMember);
     }
+
+    @Transactional
+    public void deleteCardByMemberId(UUID memberId){
+        List<Card> cards = cardRepository.findByMemberIdAndDeleted(memberId, false);
+        List<Card> deletedCard = cards.stream().map(Card::delete).toList();
+        cardRepository.save(deletedCard);
+    }
+
+
+    //private Method
+
+
 }

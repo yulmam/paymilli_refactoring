@@ -6,7 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ApproveResponse {
-
     String storeName;
     int totalPrice;
     String detail;

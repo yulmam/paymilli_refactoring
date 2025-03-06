@@ -6,8 +6,7 @@ import lombok.ToString;
 
 @Getter
 @ToString
-public class DemandPaymentCardRequest {
-
+public class DemandPaymentDetailRequest {
     private UUID cardId;
     private int chargePrice;
     private int installment;

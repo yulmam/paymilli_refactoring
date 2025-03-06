@@ -1,17 +1,18 @@
 package com.paymilli.paymilli.domain.payment.service;
 
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
-import com.paymilli.paymilli.domain.payment.client.PaymentClient;
+import com.paymilli.paymilli.domain.payment.infrastructure.PaymentClientImpl;
+import com.paymilli.paymilli.domain.payment.controller.port.PaymentDetailService;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentInfoRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.cardcompany.PaymentRefundRequest;
-import com.paymilli.paymilli.domain.payment.dto.response.cardcompany.PaymentInfoResponse;
+import com.paymilli.paymilli.domain.payment.infrastructure.dto.PaymentInfoResponse;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentDetailEntity;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentStatus;
 import com.paymilli.paymilli.domain.payment.exception.CardException;
 import com.paymilli.paymilli.domain.payment.exception.PaymentCardException;
-import com.paymilli.paymilli.domain.payment.infrastructure.PaymentGroupRepository;
 import com.paymilli.paymilli.domain.payment.infrastructure.PaymentRepository;
+import com.paymilli.paymilli.domain.payment.infrastructure.PaymentDetailRepository;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
 import com.paymilli.paymilli.global.exception.ClientException;
 
@@ -25,9 +26,9 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class PaymentDetailServiceImpl implements PaymentDetailService {
 
-    private final PaymentClient paymentClient;
+    private final PaymentClientImpl paymentClientImpl;
+    private final PaymentDetailRepository paymentDetailRepository;
     private final PaymentRepository paymentRepository;
-    private final PaymentGroupRepository paymentGroupRepository;
 
     @Transactional
     @Override
@@ -36,7 +37,7 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
         int paymentIdx = 0;
         String[] approveNumbers = new String[paymentEntity.getPaymentDetailEntities().size()];
 
-        paymentGroupRepository.save(paymentEntity);
+        paymentRepository.save(paymentEntity);
 
         try {
             // 순서대로 결제 진행
@@ -52,17 +53,13 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
                 paymentDetailEntity.setApproveNumber(approveNumber);
                 approveNumbers[paymentIdx] = approveNumber;
 
-                paymentRepository.save(paymentDetailEntity);
+                paymentDetailRepository.save(paymentDetailEntity);
             }
 
             // 성공시 결제 내역 DB 저장
             paymentEntity.setStatus(PaymentStatus.PAYMENT);
 
         } catch (ClientException e) {
-
-            log.info("=== ClientException occur ===");
-            log.error(e.getMessage(), e);
-
             // 이전 내역 환불 처리
             for (int i = 0; i < paymentIdx; i++) {
                 requestSingleRefund(approveNumbers[i]);
@@ -89,7 +86,7 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
         log.info("cardEntity: " + cardEntity.getCardNumber() + "@@@@@@@@@@@@@@@");
 
         // 결제 요청
-        PaymentInfoResponse response = paymentClient.requestPayment(
+        PaymentInfoResponse response = paymentClientImpl.requestPayment(
             new PaymentInfoRequest(storeName, paymentDetailEntity.getPrice(), cardEntity.getCardNumber(),
                 cardEntity.getCVC(),
                 cardEntity.getExpirationDate(), paymentDetailEntity.getInstallment()));
@@ -121,7 +118,7 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
         log.info("requestSingleRefund : approveNumber : " + approveNumber);
 
         try {
-            paymentClient.requestRefund(new PaymentRefundRequest(approveNumber));
+            paymentClientImpl.requestRefund(new PaymentRefundRequest(approveNumber));
         } catch (PaymentCardException e) {
             return false;
         }
