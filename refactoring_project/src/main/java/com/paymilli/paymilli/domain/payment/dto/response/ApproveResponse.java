@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ApproveResponse {
     String storeName;
-    int totalPrice;
+    long totalPrice;
     String detail;
     String refundToken;
 }

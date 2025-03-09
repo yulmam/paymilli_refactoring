@@ -1,6 +1,7 @@
 package com.paymilli.paymilli.domain.payment.service;
 
-import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
+import com.paymilli.paymilli.domain.card.domain.Card;
+import com.paymilli.paymilli.domain.card.domain.CardInfo;
 import com.paymilli.paymilli.domain.card.service.port.CardRepository;
 import com.paymilli.paymilli.domain.member.domain.Member;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
@@ -9,28 +10,35 @@ import com.paymilli.paymilli.domain.member.service.port.MemberRepository;
 import com.paymilli.paymilli.domain.payment.controller.port.PaymentDetailService;
 import com.paymilli.paymilli.domain.payment.controller.port.PaymentService;
 import com.paymilli.paymilli.domain.payment.domain.Payment;
+import com.paymilli.paymilli.domain.payment.domain.vo.PaymentCreate;
 import com.paymilli.paymilli.domain.payment.dto.request.ApprovePaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentDetailRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.RefundPaymentRequest;
+import com.paymilli.paymilli.domain.payment.infrastructure.dto.PaymentInfoRequest;
+import com.paymilli.paymilli.domain.payment.infrastructure.dto.PaymentRefundRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.ApproveResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.DemandResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.MetaResponse;
-import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
-import com.paymilli.paymilli.domain.payment.dto.response.SearchPaymentGroupResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.SearchPaymentResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.TransactionResponse;
-import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentDetailEntity;
+import com.paymilli.paymilli.domain.payment.infrastructure.dto.MakePaymentResult;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 import com.paymilli.paymilli.domain.payment.infrastructure.PaymentRepository;
+import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentStatus;
+import com.paymilli.paymilli.domain.payment.service.port.PaymentClient;
 import com.paymilli.paymilli.global.exception.BaseException;
 import com.paymilli.paymilli.global.exception.BaseResponseStatus;
+import com.paymilli.paymilli.global.util.RandomNumberGenerator;
 import com.paymilli.paymilli.global.util.RedisUtil;
+import com.paymilli.paymilli.global.util.UUIDGenerator;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,31 +57,32 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final TokenProvider tokenProvider;
     private final RedisUtil redisUtil;
-    private final PaymentDetailService paymentDetailService;
     private final CardRepository cardRepository;
     private final PaymentRepository paymentRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PaymentClient paymentClient;
+    private final UUIDGenerator uuidGenerator;
+    private final RandomNumberGenerator randomNumberGenerator;
 
-    public PaymentServiceImpl(TokenProvider tokenProvider, RedisUtil redisUtil,
-                              PaymentDetailService paymentDetailService, CardRepository cardRepository,
+    public PaymentServiceImpl(TokenProvider tokenProvider, RedisUtil redisUtil, CardRepository cardRepository,
                               PaymentRepository paymentRepository, MemberRepository memberRepository,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder, PaymentClient paymentClient, UUIDGenerator uuidGenerator, RandomNumberGenerator randomNumberGenerator) {
         this.tokenProvider = tokenProvider;
         this.redisUtil = redisUtil;
-        this.paymentDetailService = paymentDetailService;
         this.cardRepository = cardRepository;
         this.paymentRepository = paymentRepository;
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
+        this.paymentClient = paymentClient;
+        this.uuidGenerator = uuidGenerator;
+        this.randomNumberGenerator = randomNumberGenerator;
     }
 
     @Transactional
     @Override
-    public DemandResponse issueTransactionId(String token,
+    public DemandResponse issueTransactionId(UUID memberId,
         DemandPaymentRequest demandPaymentRequest) {
-        String accessToken = tokenProvider.extractAccessToken(token);
-        UUID memberId = tokenProvider.getId(accessToken);
 
         //금액 검증
         long totalPrice = demandPaymentRequest.getPaymentDetailRequests().stream()
@@ -85,10 +94,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         //todo 난수 생성 의존성의 역전
-        Random random = new Random();
-        int randomNumber = 100000 + random.nextInt(900000); // 6자리 난수 생성 (100000 ~ 999999)
-
-        String transactionId = memberId + "-" + randomNumber;
+        String transactionId = memberId + "-" + randomNumberGenerator.generateRandomNumber();
 
         redisUtil.saveDataToRedis(transactionId, demandPaymentRequest, 1200 * 1000);
 
@@ -97,18 +103,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Transactional
     @Override
-    public ApproveResponse approvePayment(String token, String transactionId,
+    public ApproveResponse approvePayment(UUID memberId, String transactionId,
         ApprovePaymentRequest approvePaymentRequest) {
 
         // todo memberId로 빼야함
-        String accessToken = tokenProvider.extractAccessToken(token);
-
-        UUID id = tokenProvider.getId(accessToken);
-
-        Member member = memberRepository.findById(id)
-            .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
-
         //결제 비밀번호 확인
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BaseException(BaseResponseStatus.MEMBER_NOT_FOUND));
         if (!member.checkPaymentPassword(approvePaymentRequest.getPassword(), passwordEncoder)) {
             throw new BaseException(BaseResponseStatus.PAYMENT_PASSWORD_ERROR);
         }
@@ -125,32 +126,68 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(DemandPaymentDetailRequest::getCardId)
                 .collect(Collectors.toList());
 
-        Card
 
-        Random random = new Random();
-        int randomNumber = 100000 + random.nextInt(900000); // 6자리 난수 생성 (100000 ~ 999999)
+        //결제 진행
+        List<Card> cards = cardRepository.findByIdsIn(cardIds);
+        Map<UUID, Card> cardMap = cards.stream()
+                .collect(Collectors.toMap(Card::getId, card-> card));
+        List<CompletableFuture<MakePaymentResult>> futures = new ArrayList<>();
+        for(DemandPaymentDetailRequest request : demandPaymentRequest.getPaymentDetailRequests()){
+            Card targetCard = cardMap.get(request.getCardId());
+            CardInfo cardInfo = targetCard.getCardInfo();
+            CompletableFuture<MakePaymentResult> future = paymentClient.requestPayment(PaymentInfoRequest.builder()
+                            .storeName(demandPaymentRequest.getStoreName())
+                            .price(request.getChargePrice())
+                            .cvc(cardInfo.getCvc())
+                            .expirationDate(cardInfo.getExpirationDate())
+                            .installment(request.getInstallment())
+                    .build());
+            futures.add(future);
+        }
 
-        String refundToken = memberEntity.getId() + "-refund-" + randomNumber;
+        List<MakePaymentResult> makePaymentResults =  CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList())).join();
 
-        redisUtil.saveDataToRedis(refundToken, paymentEntity.getId(), 300 * 1000);
 
-        return new ApproveResponse(paymentEntity.getStoreName(), paymentEntity.getTotalPrice(),
-            paymentEntity.getProductName(), refundToken);
+        for(MakePaymentResult makePaymentResult : makePaymentResults){
+            if(makePaymentResult.isSuccess()){
+                cancelPayments(makePaymentResults);
+                throw new BaseException(BaseResponseStatus.PAYMENT_FAIL);
+            }
+        }
+
+
+
+        PaymentCreate paymentCreate = PaymentCreate.builder()
+                .memberId(member.getId())
+                .totalPrice(demandPaymentRequest.getTotalPrice())
+                .status(PaymentStatus.PAYMENT)
+                .transmissionDate(LocalDateTime.now())
+                .storeName(demandPaymentRequest.getStoreName())
+                .productName(demandPaymentRequest.getDetail())
+                .build();
+
+        Payment payment = Payment.create(paymentCreate, uuidGenerator);
+
+
+        paymentRepository.save(payment);
+        String refundToken = member.getId() + "-refund-" + randomNumberGenerator.generateRandomNumber();
+
+        redisUtil.saveDataToRedis(refundToken, payment.getId(), 300 * 1000);
+
+        return new ApproveResponse(payment.getStoreName(), payment.getTotalPrice(),
+            payment.getProductName(), refundToken);
     }
-
 
 
 
     @Transactional
     @Override
-    public SearchPaymentGroupResponse searchPaymentGroup(String token, int sort, int page, int size,
-        LocalDate startDate, LocalDate endDate) {
-        log.info("page: {}, size: {}, startDate: {}, endDate: {}", page, size, startDate, endDate);
-        String accessToken = tokenProvider.extractAccessToken(token);
-        UUID memberId = tokenProvider.getId(accessToken);
+    public SearchPaymentResponse searchPayment(UUID memberId, int sort, int page, int size,
+                                               LocalDate startDate, LocalDate endDate) {
 
         Direction dir = (sort == 0) ? Direction.DESC : Direction.ASC;
-
+        //사용자 입력으로 Pageable을 받으면 안되는건가? 구지?? 이렇게 하는건가?
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, "transmissionDate"));
 
         Page<Payment> paymentPage = paymentRepository.findByMemberIdAndTransmissionDateBetween(
@@ -159,11 +196,11 @@ public class PaymentServiceImpl implements PaymentService {
 
 
         MetaResponse meta = MetaResponse.builder()
-            .total_count(paymentGroups.getTotalElements())
-            .pagable_count(paymentGroups.getTotalPages())
+            .total_count(paymentPage.getTotalElements())
+            .pagable_count(paymentPage.getTotalPages())
             .build();
 
-        List<TransactionResponse> transactions = paymentGroups.get()
+        List<TransactionResponse> transactions = paymentPage.get()
             .map(paymentGroup -> TransactionResponse.builder()
                 .id(paymentGroup.getId().toString())
                 .storeName(paymentGroup.getStoreName())
@@ -174,30 +211,23 @@ public class PaymentServiceImpl implements PaymentService {
                 .build())
             .toList();
 
-        return new SearchPaymentGroupResponse(meta, transactions);
+        return new SearchPaymentResponse(meta, transactions);
     }
 
     @Transactional
     @Override
-    public PaymentGroupResponse getPaymentGroup(String paymentGroupId) {
-        UUID paymentGroupUUID = null;
-
-        try {
-            paymentGroupUUID = UUID.fromString(paymentGroupId);
-        } catch (Exception e) {
-            throw new BaseException(BaseResponseStatus.PAYMENT_GROUP_NOT_FOUND);
-        }
-
-        PaymentEntity paymentEntity = paymentRepository.findById(paymentGroupUUID)
+    public PaymentResponse getPayment(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.PAYMENT_GROUP_NOT_FOUND));
 
-        return paymentEntity.makeResponse();
+        return PaymentResponse.from(payment);
     }
+
+
 
     @Transactional
     @Override
     public boolean refundPayment(RefundPaymentRequest refundPaymentRequest) {
-        log.info("uuid: " + refundPaymentRequest.getRefundToken());
         UUID paymentGroupId = null;
 
         try {
@@ -207,14 +237,25 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BaseException(BaseResponseStatus.REFUND_UNAUTHORIZED);
         }
 
-        PaymentEntity paymentEntity = paymentRepository.findById(
+        Payment payment = paymentRepository.findById(
                 paymentGroupId)
             .orElseThrow(() -> new BaseException(BaseResponseStatus.PAYMENT_GROUP_NOT_FOUND));
 
-        return paymentDetailService.refundPaymentGroup(paymentEntity);
+
+        payment.getPaymentDetails().stream()
+                .forEach(detail -> paymentClient.requestRefund(new PaymentRefundRequest(detail.getApproveNumber())));
+
+        Payment refundPayment = payment.refund();
+
+        paymentRepository.save(refundPayment);
+        return true;
     }
 
-    private boolean isNotSamePaymentPassword(MemberEntity memberEntity, String paymentPassword) {
-        return !passwordEncoder.matches(paymentPassword, memberEntity.getPaymentPassword());
+
+    private void cancelPayments(List<MakePaymentResult> makePaymentResults) {
+        makePaymentResults.stream()
+                .filter(MakePaymentResult::isSuccess) // 성공한 결제만 필터링
+                .map(result -> result.getResponse().getApproveNumber()) // 승인 번호 추출
+                .forEach(approveNumber -> paymentClient.requestRefund(new PaymentRefundRequest(approveNumber)));//성공한 결제들 취소
     }
 }

@@ -8,7 +8,6 @@ import lombok.ToString;
 @Getter
 @ToString
 public class DemandPaymentRequest implements Serializable {
-
     private String storeName;
     private long totalPrice;
     private String detail;

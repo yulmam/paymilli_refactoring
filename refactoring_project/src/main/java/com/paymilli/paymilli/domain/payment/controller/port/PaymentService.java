@@ -5,21 +5,22 @@ import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.request.RefundPaymentRequest;
 import com.paymilli.paymilli.domain.payment.dto.response.ApproveResponse;
 import com.paymilli.paymilli.domain.payment.dto.response.DemandResponse;
-import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
-import com.paymilli.paymilli.domain.payment.dto.response.SearchPaymentGroupResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.SearchPaymentResponse;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public interface PaymentService {
 
-    DemandResponse issueTransactionId(String token, DemandPaymentRequest demandPaymentRequest);
+    DemandResponse issueTransactionId(UUID memberID, DemandPaymentRequest demandPaymentRequest);
 
-    ApproveResponse approvePayment(String token, String transactionId,
+    ApproveResponse approvePayment(UUID memberId, String transactionId,
         ApprovePaymentRequest approvePaymentRequest);
 
-    SearchPaymentGroupResponse searchPaymentGroup(String token, int sort, int page, int size,
-        LocalDate startDate, LocalDate endDate);
+    SearchPaymentResponse searchPayment(UUID memberId, int sort, int page, int size,
+                                        LocalDate startDate, LocalDate endDate);
 
-    PaymentGroupResponse getPaymentGroup(String paymentGroupId);
+    PaymentResponse getPayment(UUID paymentGroupId);
 
     boolean refundPayment(RefundPaymentRequest refundPaymentRequest);
 }

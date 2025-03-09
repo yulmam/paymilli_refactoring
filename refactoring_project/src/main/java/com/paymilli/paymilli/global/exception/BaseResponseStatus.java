@@ -47,6 +47,7 @@ public enum BaseResponseStatus {
     LACK_OF_BALANCE(402, "잔액이 부족합니다."),
     EXCEEDED_ONE_TIME(402, "1회 결제 한도를 초과하였습니다."),
     EXCEEDED_ONE_DAY(402, "1일 결제 한도를 초과하였습니다."),
+    PAYMENT_FAIL(402, "결제에 실패했습니다."),
 
     CANT_DELETE_MAIN_CARD(403, "메인 카드는 삭제할 수 없습니다."),
     CARD_ALREADY_REGISTERED(403, "이미 등록된 카드입니다"),

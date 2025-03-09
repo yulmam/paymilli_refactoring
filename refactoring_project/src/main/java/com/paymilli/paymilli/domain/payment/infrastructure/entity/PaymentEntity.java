@@ -1,9 +1,11 @@
 package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
+import com.paymilli.paymilli.domain.card.infrastructure.JPACardRepository;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import com.paymilli.paymilli.domain.payment.domain.Payment;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentRequest;
-import com.paymilli.paymilli.domain.payment.dto.response.PaymentGroupResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
+import com.paymilli.paymilli.domain.payment.infrastructure.JPAPaymentRepository;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,9 +20,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +33,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 @Table(name = "payment")
 public class PaymentEntity {
 
@@ -95,49 +99,37 @@ public class PaymentEntity {
                 .build();
     }
 
-    @Builder
-    public PaymentEntity(long totalPrice, LocalDateTime transmissionDate, String storeName,
-                         String productName) {
-        this.totalPrice = totalPrice;
-        this.transmissionDate = transmissionDate;
-        this.storeName = storeName;
-        this.productName = productName;
-    }
+    public static PaymentEntity fromModel(
+            Payment payment,
+            MemberEntity memberEntity,
+            JPACardRepository jpaCardRepository,
+            JPAPaymentRepository jpaPaymentRepository) {
 
-    public static PaymentEntity toEntity(DemandPaymentRequest demandPaymentRequest) {
         return PaymentEntity.builder()
-            .totalPrice(demandPaymentRequest.getTotalPrice())
-            .transmissionDate(LocalDateTime.now())
-            .storeName(demandPaymentRequest.getStoreName())
-            .productName(demandPaymentRequest.getDetail())
-            .build();
+                .id(payment.getId())
+                .memberEntity(memberEntity)
+                .totalPrice(payment.getTotalPrice())
+                .status(payment.getStatus())
+                .transmissionDate(payment.getTransmissionDate())
+                .storeName(payment.getStoreName())
+                .productName(payment.getProductName()) // 올바른 변수 사용
+                .paymentDetailEntities(convertToPaymentDetailEntities(payment, jpaCardRepository, jpaPaymentRepository))
+                .deleted(payment.isDeleted())
+                .build();
     }
 
-    public void setStatus(PaymentStatus status) {
-        this.status = status;
+    private static List<PaymentDetailEntity> convertToPaymentDetailEntities(
+            Payment payment,
+            JPACardRepository jpaCardRepository,
+            JPAPaymentRepository jpaPaymentRepository) {
+
+        return payment.getPaymentDetails().stream()
+                .map(detail -> PaymentDetailEntity.fromModel(
+                        detail,
+                        jpaCardRepository.getReferenceById(detail.getCardId()),
+                        jpaPaymentRepository.getReferenceById(payment.getId())))
+                .toList();
     }
 
-    public void setMemberEntity(MemberEntity memberEntity) {
-        this.memberEntity = memberEntity;
-    }
-
-    public PaymentGroupResponse makeResponse() {
-        return PaymentGroupResponse.builder()
-            .id(id.toString())
-            .storeName(storeName)
-            .price(totalPrice)
-            .date(transmissionDate)
-            .paymentResponse(
-                paymentDetailEntities.stream()
-                    .map(PaymentDetailEntity::makeResponse)
-                    .toList()
-            )
-            .build();
-    }
-
-    public void addPayment(PaymentDetailEntity paymentDetailEntity) {
-        paymentDetailEntities.add(paymentDetailEntity);
-        paymentDetailEntity.setPaymentEntity(this);
-    }
 
 }

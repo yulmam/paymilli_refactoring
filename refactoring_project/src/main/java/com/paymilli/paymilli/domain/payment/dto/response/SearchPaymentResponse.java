@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class SearchPaymentGroupResponse {
+public class SearchPaymentResponse {
 
     private MetaResponse meta;
     private List<TransactionResponse> transactions;

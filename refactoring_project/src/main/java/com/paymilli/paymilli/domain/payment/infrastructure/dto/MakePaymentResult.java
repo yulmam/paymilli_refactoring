@@ -4,9 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.paymilli.paymilli.domain.card.dto.response.CardInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 
 
-
+@Getter
 public class MakePaymentResult {
     private boolean success;
     private PaymentInfoResponse response;
@@ -30,4 +31,7 @@ public class MakePaymentResult {
         return new MakePaymentResult(false, null, errorCode, errorMessage);
     }
 
+    public boolean isSuccess(){
+        return success;
+    }
 }

@@ -4,6 +4,7 @@ import com.paymilli.paymilli.domain.payment.domain.Payment;
 import com.paymilli.paymilli.domain.payment.infrastructure.entity.PaymentEntity;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,4 +14,8 @@ public interface PaymentRepository{
 
     Page<Payment> findByMemberIdAndTransmissionDateBetween(UUID memberId,
                                                            LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    Optional<Payment> findById(UUID paymentId);
+
+    void save(Payment payment);
 }

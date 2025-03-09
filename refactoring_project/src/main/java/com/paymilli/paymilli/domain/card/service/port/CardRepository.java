@@ -23,4 +23,6 @@ public interface CardRepository{
     Optional<Card> findMainCardByMemberId(UUID memberId);
 
     void save(List<Card> cards);
+
+    List<Card> findByIdsIn(List<UUID> cardIds);
 }

@@ -24,4 +24,5 @@ public interface JPACardRepository  extends JpaRepository<CardEntity, UUID> {
     @Query("SELECT c FROM Card c WHERE c.id = (SELECT m.mainCardId FROM Member m WHERE m.id = :memberId)")
     Optional<CardEntity> findMainCardByMemberId(@Param("memberId") UUID memberId);
 
+    List<CardEntity> findByIdIn(List<UUID> cardIds);
 }

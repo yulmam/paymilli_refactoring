@@ -75,4 +75,9 @@ public class CardRepositoryImpl implements CardRepository {
 
         jpaCardRepository.saveAll(cardEntities);
     }
+
+    @Override
+    public List<Card> findByIdsIn(List<UUID> cardIds) {
+        return jpaCardRepository.findByIdIn(cardIds).stream().map(CardEntity::toModel).toList();
+    }
 }

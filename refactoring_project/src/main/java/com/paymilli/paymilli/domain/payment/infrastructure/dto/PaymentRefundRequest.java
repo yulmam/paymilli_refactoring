@@ -1,4 +1,4 @@
-package com.paymilli.paymilli.domain.payment.dto.request.cardcompany;
+package com.paymilli.paymilli.domain.payment.infrastructure.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

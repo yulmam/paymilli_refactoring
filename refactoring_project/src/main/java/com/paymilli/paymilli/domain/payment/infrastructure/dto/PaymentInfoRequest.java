@@ -1,12 +1,11 @@
-package com.paymilli.paymilli.domain.payment.dto.request.cardcompany;
+package com.paymilli.paymilli.domain.payment.infrastructure.dto;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @ToString
 @Getter
-@NoArgsConstructor
 public class PaymentInfoRequest {
 
     private String storeName;
@@ -17,9 +16,9 @@ public class PaymentInfoRequest {
     private String cardType;
     private int installment;
 
+    @Builder
     public PaymentInfoRequest(String storeName, long price, String cardNumber, String cvc,
-        String expirationDate,
-        int installment) {
+        String expirationDate, int installment) {
         this.storeName = storeName;
         this.price = price;
         // 끝 4자리

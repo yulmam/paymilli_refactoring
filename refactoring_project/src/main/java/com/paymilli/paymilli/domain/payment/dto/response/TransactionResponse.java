@@ -14,7 +14,7 @@ public class TransactionResponse {
     private String id;
     private String storeName;
     private String detail;
-    private int price;
+    private long price;
     private LocalDateTime date;
     private PaymentStatus paymentStatus;
 }

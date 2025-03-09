@@ -1,10 +1,11 @@
 package com.paymilli.paymilli.domain.payment.infrastructure.entity;
 
+import com.paymilli.paymilli.domain.card.infrastructure.CardRepositoryImpl;
+import com.paymilli.paymilli.domain.card.infrastructure.JPACardRepository;
 import com.paymilli.paymilli.domain.card.infrastructure.entity.CardEntity;
 import com.paymilli.paymilli.domain.payment.domain.PaymentDetail;
-import com.paymilli.paymilli.domain.payment.domain.vo.CardInfoInPaymentDetail;
 import com.paymilli.paymilli.domain.payment.dto.request.DemandPaymentDetailRequest;
-import com.paymilli.paymilli.domain.payment.dto.response.PaymentResponse;
+import com.paymilli.paymilli.domain.payment.dto.response.PaymentDetailResponse;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,7 +44,7 @@ public class PaymentDetailEntity {
     private CardEntity cardEntity;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "payment_group_id")
+    @JoinColumn(name = "payment_id")
     private PaymentEntity paymentEntity;
 
     // 가격
@@ -74,38 +75,6 @@ public class PaymentDetailEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
-    public static PaymentDetailEntity toEntity(DemandPaymentDetailRequest demandPaymentDetailRequest) {
-        return PaymentDetailEntity.builder()
-            .price(demandPaymentDetailRequest.getChargePrice())
-            .installment(demandPaymentDetailRequest.getInstallment())
-            .build();
-    }
-
-    public void setApproveNumber(String approveNumber) {
-        this.approveNumber = approveNumber;
-    }
-
-    public PaymentResponse makeResponse() {
-        return PaymentResponse.builder()
-            .cardId(id.toString())
-            .cardName(cardEntity.getCardName())
-            .chargePrice(price)
-            .cardType(cardEntity.getCardType())
-            .approveNumber(approveNumber)
-            .installment(installment)
-            .cardImg(cardEntity.getCardImage())
-            .build();
-    }
-
-    public void setPaymentEntity(PaymentEntity paymentEntity) {
-        this.paymentEntity = paymentEntity;
-    }
-
-    public void setCardEntity(CardEntity cardEntity) {
-        this.cardEntity = cardEntity;
-    }
-
-
 
     public PaymentDetail toModel(){
         return PaymentDetail.builder()
@@ -114,14 +83,20 @@ public class PaymentDetailEntity {
                 .paymentId(paymentEntity.getId())
                 .price(price)
                 .installment(installment)
-                .cardInfoInPaymentDetail(CardInfoInPaymentDetail.builder()
-                        .cardId(cardEntity.getId())
-                        .cardName(cardEntity.getCardName())
-                        .cardImg(cardEntity.getCardImage())
-                        .cardType(cardEntity.getCardType())
-                        .build())
                 .approveNumber(approveNumber)
                 .deleted(deleted)
+                .build();
+    }
+
+    public static PaymentDetailEntity fromModel(PaymentDetail paymentDetail, CardEntity cardEntity, PaymentEntity paymentEntity){
+        return PaymentDetailEntity.builder()
+                .id(paymentDetail.getId())
+                .price(paymentDetail.getPrice())
+                .installment(paymentDetail.getInstallment())
+                .approveNumber(paymentDetail.getApproveNumber())
+                .cardEntity(cardEntity)
+                .paymentEntity(paymentEntity)
+                .deleted(paymentEntity.isDeleted())
                 .build();
     }
 }
