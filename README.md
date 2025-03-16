@@ -28,29 +28,25 @@
 
 - **단위 테스트 및 통합 테스트 도입**으로 **안정성 확보 및 유지보수성 향상**
 
-### 1. Domain을 불변 객체로
+## 🔍 **세부 목표**
 
-[개념](https://www.notion.so/1b2708433a6d80fa9556e80e33164e94?pvs=21)
+### 1. **Domain을 불변 객체로**
 
-[도입](https://www.notion.so/1b2708433a6d8064839cfa4bb37186d5?pvs=21)
+- [**개념**](https://www.notion.so/1b2708433a6d80fa9556e80e33164e94?pvs=21)
+- [**도입**](https://www.notion.so/1b2708433a6d8064839cfa4bb37186d5?pvs=21)
 
-### 2. 영속성 Entity와 domain을 분리하자
+### 2. **영속성 Entity와 Domain을 분리**
 
-[개념](https://www.notion.so/1b6708433a6d803396fdc03d16aa2b4c?pvs=21)
+- [**개념**](https://www.notion.so/1b6708433a6d803396fdc03d16aa2b4c?pvs=21)
+- [**도입**](https://www.notion.so/1b6708433a6d808eae9cd119aa8d9511?pvs=21)
+- [**고민한 점**](https://www.notion.so/1b6708433a6d80998f48d15309cad452?pvs=21)
+- [**후기**](https://www.notion.so/1b0708433a6d8089b04ed47c7b4af496?pvs=21)
 
-[도입](https://www.notion.so/1b6708433a6d808eae9cd119aa8d9511?pvs=21)
+### 3. **외부 API에 의존성 역전 원칙(DIP) 적용** 
+- [**왜?? 외부 API에 의존성 역전을 적용하는 거지?**](https://www.notion.so/api-1b6708433a6d802d9285f88a3dd391a7?pvs=21)
+- [**적용**](https://www.notion.so/1b6708433a6d801e9970db236df040cd?pvs=21)
 
-[고민한 점](https://www.notion.so/1b6708433a6d80998f48d15309cad452?pvs=21)
+### 4. **다중 결제 시 비동기 도입** 
 
-[후기](https://www.notion.so/1b0708433a6d8089b04ed47c7b4af496?pvs=21)
-
-### 3. **다중 결제 시 비동기 도입**
-[왜?? 외부 api에 의존성 역전을 적용하는 거지?](https://www.notion.so/api-1b6708433a6d802d9285f88a3dd391a7?pvs=21)
-
-[적용](https://www.notion.so/1b6708433a6d801e9970db236df040cd?pvs=21)
-
-
-### 4. **외부 api에 의존성 역전 원칙(DIP) 적용해보자**
-[비동기 개념들](https://www.notion.so/2-CMS-SSENBI-180708433a6d80d5869dcc7932835396?pvs=21)
-
-[다중 카드 결제의 원자성 관리와 비동기(정리 중)](https://www.notion.so/1ae708433a6d804ba055ef23cf7889e9?pvs=21)
+- [**비동기 개념들**](https://www.notion.so/2-CMS-SSENBI-180708433a6d80d5869dcc7932835396?pvs=21)
+- [**다중 카드 결제의 원자성 관리와 비동기(정리 중)**](https://www.notion.so/1ae708433a6d804ba055ef23cf7889e9?pvs=21)
