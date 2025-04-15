@@ -8,6 +8,6 @@ import com.paymilli.paymilli.domain.payment.infrastructure.dto.PaymentRefundResp
 import java.util.concurrent.CompletableFuture;
 
 public interface PaymentClient {
-    public CompletableFuture<MakePaymentResult> requestPayment(PaymentInfoRequest paymentInfoRequest);
-    public PaymentRefundResponse requestRefund(PaymentRefundRequest paymentRefundRequest);
+    CompletableFuture<MakePaymentResult> requestPayment(PaymentInfoRequest paymentInfoRequest);
+    PaymentRefundResponse requestRefund(PaymentRefundRequest paymentRefundRequest);
 }

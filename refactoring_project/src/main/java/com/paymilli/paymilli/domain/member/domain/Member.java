@@ -57,11 +57,14 @@ public class Member {
 
     public Member update(MemberUpdate memberUpdate, PasswordEncoder passwordEncoder){
         return Member.builder()
-
-
-
-
-
+                .id(id)
+                .loginId(memberUpdate.getLoginId())
+                .password(passwordEncoder.encode(memberUpdate.getRawPassword()))
+                .memberProfile(new MemberProfile(memberUpdate.getName(), memberUpdate.getBirthday(), memberUpdate.getGender(), memberUpdate.getRole(), id+"@ssafy.com", memberUpdate.getPhone()))
+                .mainCardId(memberUpdate.getMainCardId())
+                .paymentPassword(passwordEncoder.encode(memberUpdate.getRawPaymentPassword()))
+                .userKey(memberUpdate.getUserKey())
+                .deleted(memberUpdate.isDeleted())
                 .build();
     }
 

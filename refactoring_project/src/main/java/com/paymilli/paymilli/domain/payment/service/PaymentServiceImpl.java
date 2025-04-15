@@ -7,7 +7,6 @@ import com.paymilli.paymilli.domain.member.domain.Member;
 import com.paymilli.paymilli.domain.member.infrastructure.entity.MemberEntity;
 import com.paymilli.paymilli.domain.member.jwt.TokenProvider;
 import com.paymilli.paymilli.domain.member.service.port.MemberRepository;
-import com.paymilli.paymilli.domain.payment.controller.port.PaymentDetailService;
 import com.paymilli.paymilli.domain.payment.controller.port.PaymentService;
 import com.paymilli.paymilli.domain.payment.domain.Payment;
 import com.paymilli.paymilli.domain.payment.domain.vo.PaymentCreate;
@@ -131,6 +130,7 @@ public class PaymentServiceImpl implements PaymentService {
         List<Card> cards = cardRepository.findByIdsIn(cardIds);
         Map<UUID, Card> cardMap = cards.stream()
                 .collect(Collectors.toMap(Card::getId, card-> card));
+
         List<CompletableFuture<MakePaymentResult>> futures = new ArrayList<>();
         for(DemandPaymentDetailRequest request : demandPaymentRequest.getPaymentDetailRequests()){
             Card targetCard = cardMap.get(request.getCardId());
