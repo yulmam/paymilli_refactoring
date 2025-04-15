@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class PaymentCreate {
+public final class PaymentCreate {
     private final UUID memberId;
     private final long totalPrice;
     private final PaymentStatus status;

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class PaymentDetailCreate {
+public final class PaymentDetailCreate {
     private UUID cardId;
     private UUID paymentId;
     private long price;

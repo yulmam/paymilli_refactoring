@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Builder
-public class MemberProfile {
+public final class MemberProfile {
 
     private final String name;
     private final LocalDate birthday;

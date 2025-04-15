@@ -12,7 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Builder
-public class MemberUpdate {
+public final class MemberUpdate {
     private final String loginId;
     private final String rawPassword;
     private final String name;

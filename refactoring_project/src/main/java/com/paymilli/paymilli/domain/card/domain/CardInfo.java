@@ -3,7 +3,7 @@ package com.paymilli.paymilli.domain.card.domain;
 import lombok.Getter;
 
 @Getter
-public class CardInfo {
+public final class CardInfo {
     private final String cardNumber;
     private final String cvc;
     private final String expirationDate;

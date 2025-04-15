@@ -11,7 +11,7 @@ import java.util.UUID;
 
 
 @Getter
-public class Card {
+public final class Card {
     private final UUID id;
     private final UUID memberId;
     private final CardInfo cardInfo;

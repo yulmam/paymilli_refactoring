@@ -17,7 +17,7 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @Builder
-public class Member {
+public final class Member {
     private final UUID id;
     private final String loginId;
     private final String password;

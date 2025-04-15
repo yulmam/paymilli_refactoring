@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 @Getter
 @AllArgsConstructor
-public class PaymentDetail {
+public final class PaymentDetail {
     private UUID id;
     private UUID cardId;
     //삭제 고민

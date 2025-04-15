@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @Getter
-public class MemberCreate {
+public final class MemberCreate {
     private final String loginId;
     private final String rawPassword;
     private final String name;

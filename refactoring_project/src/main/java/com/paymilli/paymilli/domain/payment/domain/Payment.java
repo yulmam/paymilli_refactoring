@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 @Getter
 @AllArgsConstructor
-public class Payment {
+public final class Payment {
     private final UUID id;
     private final UUID memberId;
     private final long totalPrice;

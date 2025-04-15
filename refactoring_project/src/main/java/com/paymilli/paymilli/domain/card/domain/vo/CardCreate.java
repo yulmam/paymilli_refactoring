@@ -9,7 +9,7 @@ import lombok.Getter;
 import java.util.UUID;
 
 @Getter
-public class CardCreate {
+public final class CardCreate {
     private final UUID memberId;
     private final String cardNumber;
     private final String cvc;

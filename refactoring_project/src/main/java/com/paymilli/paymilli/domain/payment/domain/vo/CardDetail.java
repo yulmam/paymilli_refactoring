@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 @Getter
 @AllArgsConstructor
-public class CardDetail {
+public final class CardDetail {
     private String cardName;
     private String cardImg;
     private CardType cardType;
