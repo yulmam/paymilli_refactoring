@@ -187,7 +187,7 @@ public class PaymentServiceImpl implements PaymentService {
                                                LocalDate startDate, LocalDate endDate) {
 
         Direction dir = (sort == 0) ? Direction.DESC : Direction.ASC;
-        //사용자 입력으로 Pageable을 받으면 안되는건가? 구지?? 이렇게 하는건가?
+      
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, "transmissionDate"));
 
         Page<Payment> paymentPage = paymentRepository.findByMemberIdAndTransmissionDateBetween(
